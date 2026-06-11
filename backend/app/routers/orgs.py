@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import DBUser
-from app.core.authz import authz, require
+from app.core.authz import PLATFORM_OBJECT, authz, require, require_platform_admin
 from app.db.session import get_db
 from app.models.org import Org, OrgMember, OrgRole
 from app.models.project import Project, ProjectMember, ProjectRole
@@ -37,12 +37,18 @@ router = APIRouter()
 Db = Annotated[AsyncSession, Depends(get_db)]
 
 
-@router.post("", response_model=OrgOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=OrgOut,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_platform_admin)],
+)
 async def create_org(body: OrgCreate, user: DBUser, db: Db):
     """
-    Create an org; the creator becomes org admin. Also seeds a default project
-    ("General") owned by the creator — org members get auto-added to it so they
-    have somewhere to work immediately (projects are private otherwise).
+    Create a tenant (org). Platform-admin only. The creator becomes the first
+    tenant-admin. Also seeds a default project ("General") owned by the creator —
+    org members get auto-added to it so they have somewhere to work immediately
+    (projects are private otherwise).
     """
     org = Org(name=body.name)
     db.add(org)
@@ -61,6 +67,9 @@ async def create_org(body: OrgCreate, user: DBUser, db: Db):
     )
     await db.flush()
 
+    # Link the org under the platform (so platform-admins cascade into it),
+    # make the creator tenant-admin, and own the default project.
+    await authz.write(PLATFORM_OBJECT, "platform", f"org:{org.id}")
     await authz.write(f"user:{user.keycloak_sub}", "admin", f"org:{org.id}")
     await authz.write(f"org:{org.id}", "org", f"project:{default_project.id}")
     await authz.write(f"user:{user.keycloak_sub}", "owner", f"project:{default_project.id}")

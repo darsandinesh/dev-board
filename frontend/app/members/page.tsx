@@ -14,6 +14,7 @@ import {
   useRemoveOrgMember,
   useUpdateOrgMemberRole,
 } from "@/lib/api";
+import { roleLabel } from "@/lib/roles";
 
 const ORG_ROLES = ["admin", "member"];
 
@@ -115,7 +116,7 @@ export default function MembersPage() {
                       >
                         {ORG_ROLES.map((r) => (
                           <option key={r} value={r}>
-                            {r}
+                            {roleLabel(r)}
                           </option>
                         ))}
                       </select>

@@ -5,6 +5,7 @@ import { signOut } from "next-auth/react";
 import { useState } from "react";
 
 import { useCreateOrg, useMe, useOrgs } from "@/lib/api";
+import { roleLabel } from "@/lib/roles";
 
 export default function SettingsPage() {
   const { data: me } = useMe();
@@ -43,30 +44,34 @@ export default function SettingsPage() {
           <Building2 className="h-5 w-5 text-indigo-600" /> Organizations
         </h2>
         <p className="mt-1 text-sm text-slate-500">
-          Create an organization to become its admin and add projects.
+          {me?.is_platform_admin
+            ? "As a platform admin, you can provision new tenants."
+            : "Tenants are provisioned by a platform admin. You manage the orgs you belong to."}
         </p>
 
-        <form
-          className="mt-4 flex gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!orgName.trim()) return;
-            createOrg.mutate(orgName, { onSuccess: () => setOrgName("") });
-          }}
-        >
-          <input
-            value={orgName}
-            onChange={(e) => setOrgName(e.target.value)}
-            placeholder="New organization name"
-            className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-          />
-          <button
-            disabled={createOrg.isPending}
-            className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+        {me?.is_platform_admin && (
+          <form
+            className="mt-4 flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!orgName.trim()) return;
+              createOrg.mutate(orgName, { onSuccess: () => setOrgName("") });
+            }}
           >
-            <Plus className="h-4 w-4" /> Create
-          </button>
-        </form>
+            <input
+              value={orgName}
+              onChange={(e) => setOrgName(e.target.value)}
+              placeholder="New tenant / organization name"
+              className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            />
+            <button
+              disabled={createOrg.isPending}
+              className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+            >
+              <Plus className="h-4 w-4" /> Create
+            </button>
+          </form>
+        )}
 
         {orgs && orgs.length > 0 && (
           <ul className="mt-4 divide-y">
@@ -80,7 +85,7 @@ export default function SettingsPage() {
                       : "bg-slate-100 text-slate-600"
                   }`}
                 >
-                  {o.my_role}
+                  {roleLabel(o.my_role)}
                 </span>
               </li>
             ))}

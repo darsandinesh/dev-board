@@ -1,10 +1,11 @@
 "use client";
 
-import { Building2, Mail, ShieldCheck } from "lucide-react";
+import { Building2, Mail, ShieldCheck, Sparkles } from "lucide-react";
 
 import { Avatar } from "@/components/Avatar";
 import { LoaderScreen } from "@/components/Loader";
 import { useMe, useOrgs } from "@/lib/api";
+import { roleLabel } from "@/lib/roles";
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
@@ -33,7 +34,14 @@ export default function ProfilePage() {
         <div className="flex items-center gap-4">
           <Avatar name={fullName} size={64} />
           <div>
-            <div className="text-xl font-semibold text-slate-900">{fullName}</div>
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-semibold text-slate-900">{fullName}</span>
+              {me.is_platform_admin && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                  <Sparkles className="h-3 w-3" /> Platform Admin
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-1.5 text-sm text-slate-500">
               <Mail className="h-4 w-4" /> {me.email}
             </div>
@@ -64,7 +72,7 @@ export default function ProfilePage() {
                   }`}
                 >
                   {o.my_role === "admin" && <ShieldCheck className="h-3 w-3" />}
-                  {o.my_role}
+                  {roleLabel(o.my_role)}
                 </span>
               </li>
             ))}

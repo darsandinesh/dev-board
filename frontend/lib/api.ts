@@ -38,6 +38,8 @@ export interface Me {
   username: string;
   given_name: string;
   family_name: string;
+  roles: string[];
+  is_platform_admin: boolean;
 }
 
 export interface Org {
@@ -159,7 +161,7 @@ export function useProjectMembers(projectId: string) {
 export function useCreateTask(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { title: string; status?: TaskStatus }) =>
+    mutationFn: (body: { title: string; status?: TaskStatus; assignee_id?: string | null }) =>
       authedFetch<Task>("/tasks", {
         method: "POST",
         body: JSON.stringify({ project_id: projectId, ...body }),

@@ -130,6 +130,35 @@ def get_authz() -> Authz:
 
 
 # ---------------------------------------------------------------------------
+# Platform tier — the top of the tenancy tree. A platform-admin (Keycloak realm
+# role) is granted `admin` on the singleton platform object, which cascades to
+# every org/project beneath it via the model.
+# ---------------------------------------------------------------------------
+PLATFORM_OBJECT = "platform:devboard"
+
+_synced_platform_admins: set[str] = set()
+
+
+async def ensure_platform_admin_tuple(sub: str) -> None:
+    """Idempotently grant a platform-admin the platform tuple (so OpenFGA cascade
+    works). Cached per-process; tolerant of the 'already exists' write error."""
+    if sub in _synced_platform_admins:
+        return
+    try:
+        await authz.write(f"user:{sub}", "admin", PLATFORM_OBJECT)
+    except Exception as e:  # tuple already present, etc.
+        logger.debug("platform_tuple_exists", user=sub, error=str(e))
+    _synced_platform_admins.add(sub)
+
+
+async def require_platform_admin(current: AuthUser) -> None:
+    """Gate: caller must hold the platform-admin realm role."""
+    if not current.is_platform_admin:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Platform admin only")
+    await ensure_platform_admin_tuple(current.sub)
+
+
+# ---------------------------------------------------------------------------
 # The gate: require(relation, obj_type) — checks the JWT subject against the
 # object identified by a path parameter.
 # ---------------------------------------------------------------------------

@@ -92,7 +92,12 @@ docs/       the design docs this build follows (00–10)
 - ✅ All 13 auth-matrix tests pass.
 - ✅ A request can be traced end to end (`jwt.validate → openfga.check → db`), and
   every rejection point (401/403/404) is nameable.
-- ✅ Multi-tenant: an **org is a tenant**; **projects are private** (visible only
-  to explicit members). Each org gets a default "General" project and new members
-  are auto-added to it as editors. Manage members from the **Members** page (org)
-  and each project's **Settings** (project), adding users by search.
+- ✅ Multi-tenant with a **5-role model**: **platform-admin** (super admin — only
+  role that can create tenants), **tenant-admin** (full access in one org, incl.
+  all its projects), **Admin** (manage a project + its members), **Developer**
+  (create/update tasks), **viewer** (sees only tasks assigned to them). platform-admin
+  is a Keycloak realm role; the rest are org/project memberships.
+- ✅ **Projects are private** (explicit membership only; admins cascade). Each org
+  gets a default "General" project; new members are auto-added as editors. Manage
+  people from the **Members** page (org) and each project's **Settings**, adding
+  users by search.

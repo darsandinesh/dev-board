@@ -13,6 +13,7 @@ import {
   useCreateTask,
   usePermissions,
   useProject,
+  useProjectMembers,
   useTasks,
   useUpdateTask,
   type TaskStatus,
@@ -25,7 +26,13 @@ export default function ProjectBoardPage() {
   const { data: perms } = usePermissions(`project:${id}`);
   const updateTask = useUpdateTask(id);
   const createTask = useCreateTask(id);
+  const { data: members } = useProjectMembers(id);
   const [title, setTitle] = useState("");
+  const [assigneeId, setAssigneeId] = useState("");
+
+  const assignees: Record<string, string> = Object.fromEntries(
+    (members ?? []).map((m) => [m.user_id, m.username]),
+  );
 
   const move = (taskId: string, status: TaskStatus) =>
     updateTask.mutate({ id: taskId, patch: { status } });
@@ -79,12 +86,13 @@ export default function ProjectBoardPage() {
 
       <Protected allowed={perms?.can_edit}>
         <form
-          className="flex gap-2"
+          className="flex flex-col gap-2 sm:flex-row"
           onSubmit={(e) => {
             e.preventDefault();
             if (!title.trim()) return;
-            createTask.mutate({ title });
+            createTask.mutate({ title, assignee_id: assigneeId || null });
             setTitle("");
+            setAssigneeId("");
           }}
         >
           <input
@@ -93,6 +101,19 @@ export default function ProjectBoardPage() {
             placeholder="Add a task…"
             className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
           />
+          <select
+            value={assigneeId}
+            onChange={(e) => setAssigneeId(e.target.value)}
+            className="rounded-lg border bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            title="Assignee"
+          >
+            <option value="">Unassigned</option>
+            {(members ?? []).map((m) => (
+              <option key={m.user_id} value={m.user_id}>
+                {m.username}
+              </option>
+            ))}
+          </select>
           <button className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700">
             <Plus className="h-4 w-4" /> Task
           </button>
@@ -102,7 +123,12 @@ export default function ProjectBoardPage() {
       {isLoading ? (
         <LoaderScreen message="Loading tasks" />
       ) : (
-        <Board tasks={tasks ?? []} canEdit={!!perms?.can_edit} onMove={move} />
+        <Board
+          tasks={tasks ?? []}
+          canEdit={!!perms?.can_edit}
+          onMove={move}
+          assignees={assignees}
+        />
       )}
     </div>
   );

@@ -10,6 +10,7 @@ import {
   useRemoveProjectMember,
   useUpdateMemberRole,
 } from "@/lib/api";
+import { roleLabel } from "@/lib/roles";
 
 const ROLES = ["owner", "editor", "viewer"];
 
@@ -57,7 +58,7 @@ export function MemberTable({
                 >
                   {ROLES.map((r) => (
                     <option key={r} value={r}>
-                      {r}
+                      {roleLabel(r)}
                     </option>
                   ))}
                 </select>
@@ -73,7 +74,7 @@ export function MemberTable({
               </div>
             ) : (
               <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-                {m.role}
+                {roleLabel(m.role)}
               </span>
             )}
           </li>

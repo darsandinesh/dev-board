@@ -126,6 +126,8 @@ async def get_me(user: AuthUser, db_user: DBUser):
         "username": user.username,
         "given_name": user.given_name,
         "family_name": user.family_name,
+        "roles": user.roles,
+        "is_platform_admin": user.is_platform_admin,
     }
 
 

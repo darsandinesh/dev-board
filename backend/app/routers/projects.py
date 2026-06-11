@@ -56,9 +56,16 @@ async def create_project(body: ProjectCreate, user: DBUser, db: Db):
 async def list_projects(user: DBUser, db: Db):
     """List projects the caller can view, via OpenFGA ListObjects(viewer, project)."""
     visible_ids = await authz.list_objects(f"user:{user.keycloak_sub}", "viewer", "project")
-    if not visible_ids:
+    # OpenFGA may know object ids the DB doesn't (e.g. stale tuples); keep only
+    # well-formed UUIDs and let the DB join drop any that no longer exist.
+    ids = []
+    for i in visible_ids:
+        try:
+            ids.append(uuid.UUID(i))
+        except ValueError:
+            continue
+    if not ids:
         return []
-    ids = [uuid.UUID(i) for i in visible_ids]
     rows = await db.execute(
         select(Project, ProjectMember.role)
         .outerjoin(

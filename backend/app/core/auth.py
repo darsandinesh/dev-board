@@ -72,12 +72,20 @@ def _find_key(jwks: dict, kid: str):
 # ---------------------------------------------------------------------------
 # Token model
 # ---------------------------------------------------------------------------
+PLATFORM_ADMIN_ROLE = "platform-admin"
+
+
 class CurrentUser(BaseModel):
     sub: str          # Keycloak user UUID — stable, use as primary key
     email: str
     username: str     # preferred_username
     given_name: str = ""
     family_name: str = ""
+    roles: list[str] = []  # Keycloak realm roles from realm_access.roles
+
+    @property
+    def is_platform_admin(self) -> bool:
+        return PLATFORM_ADMIN_ROLE in self.roles
 
 
 # ---------------------------------------------------------------------------
@@ -158,6 +166,7 @@ async def get_current_user(
         username=payload.get("preferred_username", ""),
         given_name=payload.get("given_name", ""),
         family_name=payload.get("family_name", ""),
+        roles=payload.get("realm_access", {}).get("roles", []),
     )
 
     logger.debug("auth_ok", user_id=user.sub, username=user.username)
@@ -198,7 +207,16 @@ async def get_db_user(
         .returning(User)
     )
     result = await db.execute(stmt)
-    return result.scalar_one()
+    db_user = result.scalar_one()
+
+    # Platform-admins (Keycloak realm role) get the platform tuple so OpenFGA
+    # cascades admin to every tenant. Lazy import avoids an auth<->authz cycle.
+    if current.is_platform_admin:
+        from app.core.authz import ensure_platform_admin_tuple
+
+        await ensure_platform_admin_tuple(current.sub)
+
+    return db_user
 
 
 DBUser = Annotated[User, Depends(get_db_user)]

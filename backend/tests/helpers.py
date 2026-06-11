@@ -18,6 +18,10 @@ from app.core.config import settings
 
 TEST_KID = "test-key-1"
 
+# Usernames that are platform-admins (mirrors the Keycloak realm role). Their
+# minted tokens carry the platform-admin realm role unless roles are overridden.
+PLATFORM_ADMINS = {"alice"}
+
 _private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 _private_pem = _private_key.private_bytes(
     encoding=serialization.Encoding.PEM,
@@ -49,9 +53,13 @@ def make_token(
     iss: str | None = None,
     aud: str | None = None,
     exp_offset: int = 300,
+    roles: list[str] | None = None,
 ) -> str:
-    """Mint a test JWT. Override iss/aud/exp to exercise AuthN failure cases."""
+    """Mint a test JWT. Override iss/aud/exp to exercise AuthN failure cases.
+    Platform-admin usernames get the realm role automatically."""
     now = int(time.time())
+    if roles is None:
+        roles = ["platform-admin"] if sub in PLATFORM_ADMINS else []
     return jwt.encode(
         {
             "sub": sub,
@@ -59,6 +67,7 @@ def make_token(
             "preferred_username": username or sub,
             "iss": iss or settings.keycloak_issuer,
             "aud": aud or settings.keycloak_client_id,
+            "realm_access": {"roles": roles},
             "iat": now,
             "exp": now + exp_offset,
         },

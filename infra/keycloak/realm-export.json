@@ -60,7 +60,14 @@
       "enabled": true,
       "emailVerified": true,
       "credentials": [
-        { "type": "password", "value": "password123", "temporary": false }
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "platform-admin"
       ]
     },
     {
@@ -71,7 +78,11 @@
       "enabled": true,
       "emailVerified": true,
       "credentials": [
-        { "type": "password", "value": "password123", "temporary": false }
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
       ]
     },
     {
@@ -82,7 +93,11 @@
       "enabled": true,
       "emailVerified": true,
       "credentials": [
-        { "type": "password", "value": "password123", "temporary": false }
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
       ]
     },
     {
@@ -93,8 +108,22 @@
       "enabled": true,
       "emailVerified": true,
       "credentials": [
-        { "type": "password", "value": "password123", "temporary": false }
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
       ]
     }
-  ]
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "platform-admin",
+        "description": "Super admin: create tenants + full access",
+        "composite": false,
+        "clientRole": false
+      }
+    ]
+  }
 }

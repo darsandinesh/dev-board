@@ -18,12 +18,14 @@ export function Column({
   tasks,
   canEdit,
   onDropTask,
+  assignees = {},
 }: {
   status: TaskStatus;
   title: string;
   tasks: Task[];
   canEdit: boolean;
   onDropTask: (taskId: string, status: TaskStatus) => void;
+  assignees?: Record<string, string>;
 }) {
   const draggingId = useDragStore((s) => s.draggingId);
   const [over, setOver] = useState(false);
@@ -54,7 +56,12 @@ export function Column({
       </h2>
       <div className="flex min-h-[60px] flex-col gap-2">
         {tasks.map((t) => (
-          <TaskCard key={t.id} task={t} draggable={canEdit} />
+          <TaskCard
+            key={t.id}
+            task={t}
+            draggable={canEdit}
+            assignee={t.assignee_id ? assignees[t.assignee_id] : undefined}
+          />
         ))}
       </div>
     </div>

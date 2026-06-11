@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { Avatar } from "@/components/Avatar";
 import { useUserSearch } from "@/lib/api";
+import { roleLabel } from "@/lib/roles";
 
 /**
  * Search existing users by name/email and add the chosen one with a role.
@@ -46,7 +47,7 @@ export function AddMemberSearch({
         >
           {roles.map((r) => (
             <option key={r} value={r}>
-              {r}
+              {roleLabel(r)}
             </option>
           ))}
         </select>
@@ -74,7 +75,7 @@ export function AddMemberSearch({
                   }}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
                 >
-                  <UserPlus className="h-3.5 w-3.5" /> Add as {role}
+                  <UserPlus className="h-3.5 w-3.5" /> Add as {roleLabel(role)}
                 </button>
               </li>
             ))

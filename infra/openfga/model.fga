@@ -3,22 +3,34 @@ model
 
 type user
 
-type org
+# Platform = the top of the tenancy tree. platform-admins (the super admins,
+# granted via a Keycloak realm role) administer every tenant beneath it.
+type platform
   relations
     define admin: [user]
+
+type org
+  relations
+    define platform: [platform]
+    # tenant-admin: explicit org admin OR any platform admin (cascade).
+    define admin: [user] or admin from platform
     define member: [user] or admin
 
 type project
   relations
     define org: [org]
-    define owner: [user]
+    # "Admin" role: explicit project admin OR any tenant/platform admin of the
+    # parent org (admins see & manage all projects in their tenant).
+    define owner: [user] or admin from org
+    # "Developer" role: explicit editor OR the project admin.
     define editor: [user] or owner
-    # Private projects: visibility requires an explicit project tuple
-    # (owner/editor/viewer). Org membership alone does NOT grant viewing.
+    # project-level read; the board is visible, but task visibility is narrower.
     define viewer: [user] or editor
 
 type task
   relations
     define project: [project]
+    define assignee: [user]
     define can_edit: editor from project
-    define can_view: viewer from project
+    # Editors+ see every task; a plain viewer sees ONLY tasks assigned to them.
+    define can_view: editor from project or assignee

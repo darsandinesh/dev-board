@@ -96,25 +96,39 @@ The OpenFGA model (`infra/openfga/model.fga`):
 
 ```
 type user
-type org      admin:[user];  member:[user] or admin
-type project  org:[org];  owner:[user];  editor:[user] or owner
-              viewer:[user] or editor                 # private — explicit only
-type task     project:[project];  can_edit: editor from project
-                                   can_view: viewer from project
+type platform  admin:[user]                                  # platform-admin
+type org       platform:[platform]
+               admin:[user] or admin from platform           # tenant-admin (+ platform)
+               member:[user] or admin
+type project   org:[org]
+               owner:[user] or admin from org                 # "Admin" (+ tenant/platform)
+               editor:[user] or owner                         # "Developer"
+               viewer:[user] or editor                        # private — explicit only
+type task      project:[project];  assignee:[user]
+               can_edit: editor from project
+               can_view: editor from project or assignee      # viewer => assigned only
 ```
 
-**Projects are private**: `viewer` resolves only from an explicit project tuple
-(owner/editor/viewer). Org membership alone grants *no* project visibility — a
-user sees only the projects they've been added to. To make a tenant usable, each
-org auto-creates a **default project** ("General") and every new org member is
-auto-added to it as `editor` (an explicit tuple). `can_edit: editor from project`
-means a task's edit permission is *computed* from its parent project, so moving a
-task between projects re-derives all permissions by rewriting one tuple.
+**The five roles** map across three tiers:
 
-> Earlier revisions used `viewer: … or member from org` (every org member could
-> view every project). That was dropped in favor of private projects — the
-> membership boundary is now the org, but the *visibility* boundary is the
-> project.
+| Role | Tier | OpenFGA |
+|---|---|---|
+| **platform-admin** | platform | `platform#admin` (Keycloak realm role → synced tuple) — cascades everywhere |
+| **tenant-admin** | org | `org#admin` — full tenant access incl. every project (`admin from org`) |
+| **Admin** | project | `project#owner` — manage project, members, tasks |
+| **Developer** | project | `project#editor` — create/update tasks |
+| **viewer** | project/task | `project#viewer` + sees only tasks where they're the `assignee` |
+
+Two properties to note:
+- **Projects are private**: `viewer` needs an explicit project tuple. Org
+  membership alone grants nothing — but **admins cascade**: a tenant-admin (and
+  any platform-admin) is `owner` of every project in the tenant via
+  `admin from org` / `admin from platform`. To bootstrap usability, each org
+  auto-creates a **default "General" project** and new members are auto-added as
+  editors.
+- **Assignment-based task visibility**: editors+ see every task; a plain viewer
+  sees only tasks assigned to them (`can_view: editor from project or assignee`).
+  Tenant creation is **platform-admin only**.
 
 ## Why ReBAC, not roles-in-the-JWT
 

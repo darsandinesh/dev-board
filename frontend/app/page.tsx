@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 
 import { LoaderScreen } from "@/components/Loader";
 import { useCreateProject, useOrgs, useProjects } from "@/lib/api";
+import { roleLabel } from "@/lib/roles";
 
 const ROLE_STYLES: Record<string, { badge: string; bar: string }> = {
   owner: { badge: "bg-indigo-50 text-indigo-700", bar: "bg-indigo-500" },
@@ -158,7 +159,7 @@ export default function HomePage() {
                         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${style.badge}`}
                       >
                         {role === "owner" && <Crown className="h-3 w-3" />}
-                        {role}
+                        {roleLabel(role)}
                       </span>
                     </div>
                     <div className="mt-3 font-semibold text-slate-900 group-hover:text-indigo-700">

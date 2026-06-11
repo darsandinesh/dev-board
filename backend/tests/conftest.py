@@ -28,12 +28,45 @@ import pytest
 import pytest_asyncio
 from sqlalchemy import text
 
-from app.core import auth
+from openfga_sdk import ClientConfiguration, OpenFgaClient
+from openfga_sdk.client.models import ClientTuple, ClientWriteRequest
+
+from app.core import auth, authz as authz_mod
 from app.core.cache import redis_client
+from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
 from app.main import app
 from tests.helpers import bearer, test_jwks  # noqa: F401 (bearer re-exported)
+
+
+async def _clear_openfga_tuples():
+    """Delete every tuple in the store so each test starts from a clean graph."""
+    cfg = ClientConfiguration(
+        api_url=settings.openfga_api_url,
+        store_id=settings.openfga_store_id,
+        authorization_model_id=settings.openfga_model_id,
+    )
+    async with OpenFgaClient(cfg) as fga:
+        token = None
+        while True:
+            opts = {"continuation_token": token} if token else None
+            resp = await fga.read(None, options=opts)
+            tuples = resp.tuples or []
+            if tuples:
+                await fga.write(
+                    ClientWriteRequest(
+                        deletes=[
+                            ClientTuple(
+                                user=t.key.user, relation=t.key.relation, object=t.key.object
+                            )
+                            for t in tuples
+                        ]
+                    )
+                )
+            token = getattr(resp, "continuation_token", None)
+            if not token:
+                break
 
 # Safety net: refuse to run if we somehow aren't pointed at the test DB.
 assert engine.url.database == "devboard_test", (
@@ -62,13 +95,15 @@ async def _create_schema():
 
 @pytest_asyncio.fixture(autouse=True)
 async def _clean_state():
-    """Wipe Postgres rows + Redis cache before each test for isolation.
-    (OpenFGA tuples use fresh UUIDs per test, so they don't collide.)"""
+    """Full isolation per test: wipe Postgres rows, Redis cache, OpenFGA tuples,
+    and the platform-admin sync cache (so platform tuples are re-written)."""
     async with engine.begin() as conn:
         await conn.execute(text(
             "TRUNCATE tasks, project_members, projects, org_members, orgs, users CASCADE"
         ))
     await redis_client.flushdb()
+    await _clear_openfga_tuples()
+    authz_mod._synced_platform_admins.clear()
     yield
 
 

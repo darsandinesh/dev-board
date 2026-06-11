@@ -1,10 +1,13 @@
 """
 Task endpoints.
 
-Authz (Day 3): POST /tasks and GET /tasks?project_id check the parent *project*
-(the task may not exist yet / the list is project-scoped), so they call authz
-inline. GET/PATCH/DELETE on a single task use require() on the task itself —
-OpenFGA does the task→project traversal internally (can_edit/can_view).
+POST /tasks and GET /tasks?project_id check the parent *project* (the task may
+not exist yet / the list is project-scoped). GET/PATCH/DELETE on a single task
+use require() on the task itself — OpenFGA does the task→project traversal.
+
+Visibility: editors+ (Developer/Admin/tenant/platform admin) see every task in a
+project; a plain viewer sees ONLY the tasks assigned to them. Assignment is an
+OpenFGA `assignee` tuple kept in sync with the task's assignee_id.
 """
 
 import uuid
@@ -19,6 +22,7 @@ from app.core.authz import authz, require
 from app.db.session import get_db
 from app.models.project import Project
 from app.models.task import Task
+from app.models.user import User
 from app.schemas.task import TaskCreate, TaskOut, TaskUpdate
 
 router = APIRouter()
@@ -26,12 +30,18 @@ router = APIRouter()
 Db = Annotated[AsyncSession, Depends(get_db)]
 
 
+async def _sub_for(db: AsyncSession, user_id: uuid.UUID | None) -> str | None:
+    if user_id is None:
+        return None
+    u = await db.get(User, user_id)
+    return u.keycloak_sub if u else None
+
+
 @router.post("", response_model=TaskOut, status_code=status.HTTP_201_CREATED)
 async def create_task(body: TaskCreate, user: DBUser, db: Db):
-    """Create a task in a project. (Auth: can_edit on the parent project.)"""
+    """Create a task in a project. (Auth: editor — Developer or above.)"""
     if await db.get(Project, body.project_id) is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Project not found")
-    # "can_edit on a project" = the project's `editor` relation (editor or owner).
     if not await authz.check(f"user:{user.keycloak_sub}", "editor", f"project:{body.project_id}"):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
 
@@ -46,17 +56,25 @@ async def create_task(body: TaskCreate, user: DBUser, db: Db):
     db.add(task)
     await db.flush()
     await authz.write(f"project:{body.project_id}", "project", f"task:{task.id}")
+    assignee_sub = await _sub_for(db, body.assignee_id)
+    if assignee_sub:
+        await authz.write(f"user:{assignee_sub}", "assignee", f"task:{task.id}")
     return task
 
 
 @router.get("", response_model=list[TaskOut])
 async def list_tasks(project_id: uuid.UUID, user: DBUser, db: Db):
-    """List tasks in a project (Kanban feed). (Auth: viewer on the project.)"""
-    if not await authz.check(f"user:{user.keycloak_sub}", "viewer", f"project:{project_id}"):
+    """Kanban feed. Editors+ see all tasks; a viewer sees only their assigned tasks."""
+    me = f"user:{user.keycloak_sub}"
+    base = select(Task).where(Task.project_id == project_id).order_by(Task.status, Task.position)
+
+    if await authz.check(me, "editor", f"project:{project_id}"):
+        rows = await db.execute(base)
+    elif await authz.check(me, "viewer", f"project:{project_id}"):
+        # viewer: only tasks assigned to them
+        rows = await db.execute(base.where(Task.assignee_id == user.id))
+    else:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
-    rows = await db.execute(
-        select(Task).where(Task.project_id == project_id).order_by(Task.status, Task.position)
-    )
     return list(rows.scalars().all())
 
 
@@ -81,12 +99,22 @@ async def update_task(task_id: uuid.UUID, body: TaskUpdate, user: DBUser, db: Db
     task = await db.get(Task, task_id)
     if task is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Task not found")
-    for field, value in body.model_dump(exclude_unset=True).items():
+
+    patch = body.model_dump(exclude_unset=True)
+    old_assignee_id = task.assignee_id
+    for field, value in patch.items():
         setattr(task, field, value)
     await db.flush()
-    # `updated_at` is set by an ON UPDATE server default; reload so the response
-    # serializer reads it without triggering a lazy load outside the async context.
-    await db.refresh(task)
+    await db.refresh(task)  # `updated_at` ON UPDATE default
+
+    # Keep the assignee tuple in sync if assignee changed.
+    if "assignee_id" in patch and patch["assignee_id"] != old_assignee_id:
+        old_sub = await _sub_for(db, old_assignee_id)
+        if old_sub:
+            await authz.delete(f"user:{old_sub}", "assignee", f"task:{task_id}")
+        new_sub = await _sub_for(db, patch["assignee_id"])
+        if new_sub:
+            await authz.write(f"user:{new_sub}", "assignee", f"task:{task_id}")
     return task
 
 
@@ -100,6 +128,9 @@ async def delete_task(task_id: uuid.UUID, user: DBUser, db: Db):
     if task is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Task not found")
     project_id = task.project_id
+    assignee_sub = await _sub_for(db, task.assignee_id)
     await db.delete(task)
     await db.flush()
     await authz.delete(f"project:{project_id}", "project", f"task:{task_id}")
+    if assignee_sub:
+        await authz.delete(f"user:{assignee_sub}", "assignee", f"task:{task_id}")

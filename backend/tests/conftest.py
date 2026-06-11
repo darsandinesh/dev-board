@@ -12,7 +12,10 @@ Integration test harness (Day 6).
 Requires the stack up: docker compose up -d postgres redis openfga
 """
 
+import json
 import os
+import subprocess
+from pathlib import Path
 
 # Set BEFORE any app module imports settings:
 #  - run the suite against a DEDICATED database so tests never touch dev data
@@ -22,6 +25,22 @@ os.environ["DATABASE_URL"] = (
     "postgresql+asyncpg://devboard:devboard@localhost:5433/devboard_test"
 )
 os.environ["ENABLE_TELEMETRY"] = "false"
+
+# CRITICAL: tests get their OWN OpenFGA store. The per-test tuple cleanup wipes
+# the whole store, so sharing the dev store would destroy the running app's
+# authorization graph. Create a fresh store + model and point the app at it.
+_OPENFGA_URL = os.environ.get("OPENFGA_API_URL", "http://localhost:8082")
+_MODEL_FILE = Path(__file__).resolve().parents[2] / "infra" / "openfga" / "model.fga"
+_created = json.loads(
+    subprocess.run(
+        ["fga", "--api-url", _OPENFGA_URL, "store", "create",
+         "--name", "devboard-pytest", "--model", str(_MODEL_FILE)],
+        capture_output=True, text=True, check=True,
+    ).stdout
+)
+os.environ["OPENFGA_API_URL"] = _OPENFGA_URL
+os.environ["OPENFGA_STORE_ID"] = _created["store"]["id"]
+os.environ["OPENFGA_MODEL_ID"] = _created["model"]["authorization_model_id"]
 
 import httpx
 import pytest

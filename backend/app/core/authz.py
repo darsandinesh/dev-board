@@ -25,7 +25,9 @@ from openfga_sdk.client.models import (
 )
 
 from app.core.auth import AuthUser
+from app.core.cache import redis_client
 from app.core.config import settings
+from app.core.telemetry import tracer
 
 logger = structlog.get_logger()
 
@@ -45,22 +47,35 @@ class Authz:
     async def check(self, user: str, relation: str, obj: str) -> bool:
         """Does `user` have `relation` on object `obj`? e.g.
         check("user:<sub>", "viewer", "project:<id>")."""
-        key = f"authz:{user}:{relation}:{obj}"
-        if self._redis is not None:
-            cached = await self._redis.get(key)
-            if cached is not None:
-                return cached == b"1"
+        with tracer.start_as_current_span("openfga.check") as span:
+            span.set_attribute("authz.user", user)
+            span.set_attribute("authz.relation", relation)
+            span.set_attribute("authz.object", obj)
 
-        async with OpenFgaClient(self._cfg) as fga:
-            resp = await fga.check(
-                ClientCheckRequest(user=user, relation=relation, object=obj)
-            )
-        allowed = bool(resp.allowed)
+            key = f"authz:{user}:{relation}:{obj}"
+            if self._redis is not None:
+                cached = await self._redis.get(key)
+                if cached is not None:
+                    allowed = cached == b"1"
+                    span.set_attribute("authz.cache", "hit")
+                    span.set_attribute("authz.allowed", allowed)
+                    logger.debug("authz_check", user=user, relation=relation,
+                                 object=obj, allowed=allowed, cache="hit")
+                    return allowed
 
-        if self._redis is not None:
-            await self._redis.set(key, b"1" if allowed else b"0", ex=30)
-        logger.debug("authz_check", user=user, relation=relation, object=obj, allowed=allowed)
-        return allowed
+            async with OpenFgaClient(self._cfg) as fga:
+                resp = await fga.check(
+                    ClientCheckRequest(user=user, relation=relation, object=obj)
+                )
+            allowed = bool(resp.allowed)
+
+            if self._redis is not None:
+                await self._redis.set(key, b"1" if allowed else b"0", ex=30)
+            span.set_attribute("authz.cache", "miss")
+            span.set_attribute("authz.allowed", allowed)
+            logger.debug("authz_check", user=user, relation=relation,
+                         object=obj, allowed=allowed, cache="miss")
+            return allowed
 
     async def list_objects(self, user: str, relation: str, obj_type: str) -> list[str]:
         """Return every object of `obj_type` on which `user` has `relation`,
@@ -106,7 +121,7 @@ authz = Authz(
     api_url=settings.openfga_api_url,
     store_id=settings.openfga_store_id,
     model_id=settings.openfga_model_id,
-    redis=None,  # Day 5
+    redis=redis_client,  # Day 5: 30s decision cache + per-user invalidation
 )
 
 

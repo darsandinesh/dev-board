@@ -23,6 +23,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.telemetry import tracer
 from app.db.session import get_db
 from app.models.user import User
 
@@ -132,17 +133,18 @@ async def get_current_user(
             detail="Unknown signing key",
         )
 
-    # Verify and decode
+    # Verify and decode (manual span — one of the three rejection points)
     try:
-        public_key = jwk.construct(key_data)
-        payload = jwt.decode(
-            token,
-            public_key,
-            algorithms=["RS256"],
-            audience=settings.keycloak_client_id,
-            issuer=settings.keycloak_issuer,
-            options={"verify_exp": True},
-        )
+        with tracer.start_as_current_span("jwt.validate"):
+            public_key = jwk.construct(key_data)
+            payload = jwt.decode(
+                token,
+                public_key,
+                algorithms=["RS256"],
+                audience=settings.keycloak_client_id,
+                issuer=settings.keycloak_issuer,
+                options={"verify_exp": True},
+            )
     except JWTError as e:
         logger.warning("jwt_validation_failed", error=str(e))
         raise HTTPException(

@@ -53,6 +53,18 @@ services:
       retries: 10
       start_period: 60s
 
+  # One-shot: create OpenFGA's schema in the `openfga` database, then exit.
+  openfga-migrate:
+    image: openfga/openfga:latest
+    command: migrate
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://devboard:devboard@postgres:5432/openfga?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   openfga:
     image: openfga/openfga:latest
     command: run
@@ -69,6 +81,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      openfga-migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "/usr/local/bin/grpc_health_probe", "-addr=:8081"]
       interval: 5s

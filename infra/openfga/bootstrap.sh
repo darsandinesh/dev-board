@@ -19,7 +19,7 @@ echo "    Store ID: $STORE_ID"
 echo "==> Writing authorization model..."
 # Convert .fga DSL to JSON using the fga CLI if available, otherwise use pre-built JSON
 if command -v fga &> /dev/null; then
-  MODEL_JSON=$(fga model transform --input-format fga --output-format json < "$MODEL_FILE")
+  MODEL_JSON=$(fga model transform --file "$MODEL_FILE")
 else
   # Pre-built JSON equivalent of our model.fga
   MODEL_JSON='{
@@ -81,10 +81,12 @@ MODEL_ID=$(echo "$MODEL_RESPONSE" | python3 -c "import sys,json; print(json.load
 echo "    Model ID: $MODEL_ID"
 
 echo "==> Writing to $ENV_FILE..."
-# Update or append OPENFGA vars in .env
+# Update or append OPENFGA vars in .env (sed -i differs between GNU and BSD/macOS,
+# so use a portable -i with an explicit empty backup suffix).
+if [ "$(uname)" = "Darwin" ]; then SED_INPLACE=(-i ''); else SED_INPLACE=(-i); fi
 if grep -q "OPENFGA_STORE_ID" "$ENV_FILE" 2>/dev/null; then
-  sed -i "s/OPENFGA_STORE_ID=.*/OPENFGA_STORE_ID=$STORE_ID/" "$ENV_FILE"
-  sed -i "s/OPENFGA_MODEL_ID=.*/OPENFGA_MODEL_ID=$MODEL_ID/" "$ENV_FILE"
+  sed "${SED_INPLACE[@]}" "s|OPENFGA_STORE_ID=.*|OPENFGA_STORE_ID=$STORE_ID|" "$ENV_FILE"
+  sed "${SED_INPLACE[@]}" "s|OPENFGA_MODEL_ID=.*|OPENFGA_MODEL_ID=$MODEL_ID|" "$ENV_FILE"
 else
   echo "" >> "$ENV_FILE"
   echo "OPENFGA_STORE_ID=$STORE_ID" >> "$ENV_FILE"

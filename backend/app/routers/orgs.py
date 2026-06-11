@@ -1,8 +1,13 @@
 """
-Org endpoints — Day 2: JWT-gated CRUD only, NO authz checks yet.
+Org endpoints.
 
-OpenFGA tuple writes + `require(...)` permission checks are added in Day 3.
-For now any authenticated user can call these; the DB rows are the deliverable.
+Authz (Day 3): each endpoint is gated by an OpenFGA relation per doc 04, and
+mutations dual-write the relationship tuples per doc 03's tuple lifecycle.
+
+Tuple/DB consistency: we flush() to get ids and write the OpenFGA tuple inside
+the handler; the request-scoped DB commit happens on success at request end. If
+the tuple write raises, the exception rolls the DB transaction back, so neither
+side persists. (Outbox pattern would be the at-scale answer — Day 7.)
 """
 
 import uuid
@@ -13,6 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import DBUser
+from app.core.authz import authz, require
 from app.db.session import get_db
 from app.models.org import Org, OrgMember, OrgRole
 from app.models.user import User
@@ -26,17 +32,21 @@ Db = Annotated[AsyncSession, Depends(get_db)]
 
 @router.post("", response_model=OrgOut, status_code=status.HTTP_201_CREATED)
 async def create_org(body: OrgCreate, user: DBUser, db: Db):
-    """Create an org; the creator becomes org admin."""
+    """Create an org; the creator becomes org admin. (Auth: any logged-in user.)"""
     org = Org(name=body.name)
     db.add(org)
-    await db.flush()  # populate org.id
+    await db.flush()
     db.add(OrgMember(org_id=org.id, user_id=user.id, role=OrgRole.admin))
     await db.flush()
-    # TODO Day 3: authz.write(f"user:{user.keycloak_sub}", "admin", "org", org.id)
+    await authz.write(f"user:{user.keycloak_sub}", "admin", f"org:{org.id}")
     return org
 
 
-@router.get("/{org_id}", response_model=OrgOut)
+@router.get(
+    "/{org_id}",
+    response_model=OrgOut,
+    dependencies=[Depends(require("member", "org", "org_id"))],
+)
 async def get_org(org_id: uuid.UUID, user: DBUser, db: Db):
     org = await db.get(Org, org_id)
     if org is None:
@@ -44,7 +54,11 @@ async def get_org(org_id: uuid.UUID, user: DBUser, db: Db):
     return org
 
 
-@router.get("/{org_id}/members", response_model=list[MemberOut])
+@router.get(
+    "/{org_id}/members",
+    response_model=list[MemberOut],
+    dependencies=[Depends(require("member", "org", "org_id"))],
+)
 async def list_org_members(org_id: uuid.UUID, user: DBUser, db: Db):
     rows = await db.execute(
         select(OrgMember.user_id, User.username, OrgMember.role)
@@ -58,11 +72,12 @@ async def list_org_members(org_id: uuid.UUID, user: DBUser, db: Db):
 
 
 @router.post(
-    "/{org_id}/members", response_model=MemberOut, status_code=status.HTTP_201_CREATED
+    "/{org_id}/members",
+    response_model=MemberOut,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require("admin", "org", "org_id"))],
 )
-async def add_org_member(
-    org_id: uuid.UUID, body: OrgMemberCreate, user: DBUser, db: Db
-):
+async def add_org_member(org_id: uuid.UUID, body: OrgMemberCreate, user: DBUser, db: Db):
     if await db.get(Org, org_id) is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Org not found")
     target = await db.get(User, body.user_id)
@@ -73,34 +88,42 @@ async def add_org_member(
 
     db.add(OrgMember(org_id=org_id, user_id=body.user_id, role=body.role))
     await db.flush()
-    # TODO Day 3: authz.write(f"user:{target.keycloak_sub}", body.role, "org", org_id)
+    await authz.write(f"user:{target.keycloak_sub}", body.role.value, f"org:{org_id}")
     return MemberOut(user_id=body.user_id, username=target.username, role=body.role.value)
 
 
-@router.patch("/{org_id}/members/{user_id}", response_model=MemberOut)
+@router.patch(
+    "/{org_id}/members/{user_id}",
+    response_model=MemberOut,
+    dependencies=[Depends(require("admin", "org", "org_id"))],
+)
 async def update_org_member_role(
-    org_id: uuid.UUID,
-    user_id: uuid.UUID,
-    body: OrgMemberRoleUpdate,
-    user: DBUser,
-    db: Db,
+    org_id: uuid.UUID, user_id: uuid.UUID, body: OrgMemberRoleUpdate, user: DBUser, db: Db
 ):
     member = await db.get(OrgMember, (org_id, user_id))
     if member is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Member not found")
+    target = await db.get(User, user_id)
+    old_role = member.role
     member.role = body.role
     await db.flush()
-    # TODO Day 3: delete old tuple, write new tuple, invalidate cache
-    target = await db.get(User, user_id)
+    if old_role != body.role:
+        await authz.delete(f"user:{target.keycloak_sub}", old_role.value, f"org:{org_id}")
+        await authz.write(f"user:{target.keycloak_sub}", body.role.value, f"org:{org_id}")
     return MemberOut(user_id=user_id, username=target.username, role=body.role.value)
 
 
-@router.delete("/{org_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def remove_org_member(
-    org_id: uuid.UUID, user_id: uuid.UUID, user: DBUser, db: Db
-):
+@router.delete(
+    "/{org_id}/members/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require("admin", "org", "org_id"))],
+)
+async def remove_org_member(org_id: uuid.UUID, user_id: uuid.UUID, user: DBUser, db: Db):
     member = await db.get(OrgMember, (org_id, user_id))
     if member is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Member not found")
+    target = await db.get(User, user_id)
+    role = member.role
     await db.delete(member)
-    # TODO Day 3: delete tuple, invalidate cache
+    await db.flush()
+    await authz.delete(f"user:{target.keycloak_sub}", role.value, f"org:{org_id}")

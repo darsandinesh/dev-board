@@ -2,7 +2,7 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.auth import AuthUser
+from app.core.auth import AuthUser, DBUser
 from app.core.config import settings
 
 # Configure structlog
@@ -44,13 +44,17 @@ async def health():
 # /me — Day 1 gate: proves JWT validation works end-to-end
 # ---------------------------------------------------------------------------
 @app.get("/me")
-async def get_me(user: AuthUser):
+async def get_me(user: AuthUser, db_user: DBUser):
     """
     Returns the decoded identity of the caller.
     AC: valid token → 200 with user info; no/bad token → 401.
+
+    Depending on DBUser also lazily upserts the local `users` row, so the very
+    first authenticated request a user makes provisions their row (Day 2 AC).
     """
-    logger.info("get_me", user_id=user.sub, username=user.username)
+    logger.info("get_me", user_id=user.sub, username=user.username, local_id=str(db_user.id))
     return {
+        "id": str(db_user.id),
         "sub": user.sub,
         "email": user.email,
         "username": user.username,

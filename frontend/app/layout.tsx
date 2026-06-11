@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
-import { Nav } from "@/components/Nav";
+import { AppShell } from "@/components/AppShell";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -15,8 +15,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body>
         <Providers>
-          <Nav />
-          <main className="mx-auto max-w-6xl p-6">{children}</main>
+          <AppShell>{children}</AppShell>
         </Providers>
       </body>
     </html>

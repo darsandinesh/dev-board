@@ -1,8 +1,16 @@
 "use client";
 
+import { useState } from "react";
+
 import type { Task, TaskStatus } from "@/lib/api";
 import { useDragStore } from "@/lib/store";
 import { TaskCard } from "./TaskCard";
+
+const ACCENT: Record<TaskStatus, string> = {
+  todo: "bg-slate-400",
+  in_progress: "bg-amber-400",
+  done: "bg-emerald-500",
+};
 
 export function Column({
   status,
@@ -18,21 +26,33 @@ export function Column({
   onDropTask: (taskId: string, status: TaskStatus) => void;
 }) {
   const draggingId = useDragStore((s) => s.draggingId);
+  const [over, setOver] = useState(false);
 
   return (
     <div
       onDragOver={(e) => {
-        if (canEdit) e.preventDefault();
+        if (canEdit) {
+          e.preventDefault();
+          setOver(true);
+        }
       }}
+      onDragLeave={() => setOver(false)}
       onDrop={() => {
+        setOver(false);
         if (canEdit && draggingId) onDropTask(draggingId, status);
       }}
-      className="flex w-full flex-col rounded-lg bg-slate-100 p-3"
+      className={`flex w-full flex-col rounded-2xl border bg-slate-100/70 p-3 transition ${
+        over ? "ring-2 ring-indigo-400" : ""
+      }`}
     >
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-        {title} <span className="text-slate-400">({tasks.length})</span>
+      <h2 className="mb-3 flex items-center gap-2 px-1 text-sm font-semibold text-slate-600">
+        <span className={`h-2 w-2 rounded-full ${ACCENT[status]}`} />
+        {title}
+        <span className="ml-auto rounded-full bg-white px-2 text-xs text-slate-400">
+          {tasks.length}
+        </span>
       </h2>
-      <div className="flex flex-col gap-2">
+      <div className="flex min-h-[60px] flex-col gap-2">
         {tasks.map((t) => (
           <TaskCard key={t.id} task={t} draggable={canEdit} />
         ))}

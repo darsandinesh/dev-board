@@ -31,6 +31,15 @@ export interface Task {
   position: number;
 }
 
+export interface Me {
+  id: string;
+  sub: string;
+  email: string;
+  username: string;
+  given_name: string;
+  family_name: string;
+}
+
 export interface Org {
   id: string;
   name: string;
@@ -77,6 +86,13 @@ async function authedFetch<T>(path: string, init: RequestInit = {}): Promise<T> 
 export { authedFetch };
 
 // ---- hooks ------------------------------------------------------------------
+export function useMe() {
+  return useQuery({
+    queryKey: ["me"],
+    queryFn: () => authedFetch<Me>("/me"),
+  });
+}
+
 export function useProjects() {
   return useQuery({
     queryKey: ["projects"],

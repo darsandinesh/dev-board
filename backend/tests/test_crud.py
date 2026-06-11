@@ -22,6 +22,27 @@ async def test_org_create_and_members(client, seed):
     assert {"alice", "bob"} <= usernames
 
 
+async def test_org_creates_default_project(client, seed):
+    org = await seed.org(admin="alice")
+    projects = (await client.get("/projects", headers=bearer("alice"))).json()
+    assert any(p["name"] == "General" and p["my_role"] == "owner" for p in projects)
+
+
+async def test_add_org_member_auto_adds_to_default_project(client, seed):
+    org = await seed.org(admin="alice")
+    await seed.add_org_member(org, admin="alice", user="bob", role="member")
+    bobs = (await client.get("/projects", headers=bearer("bob"))).json()
+    assert any(p["name"] == "General" and p["my_role"] == "editor" for p in bobs)
+
+
+async def test_user_search(client, seed):
+    await seed.provision("alice")
+    await seed.provision("bob")
+    r = await client.get("/users?search=bo", headers=bearer("alice"))
+    assert r.status_code == 200
+    assert any(u["username"] == "bob" for u in r.json())
+
+
 async def test_list_my_orgs(client, seed):
     org = await seed.org(admin="alice")
     r = await client.get("/orgs", headers=bearer("alice"))

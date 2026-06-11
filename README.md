@@ -92,5 +92,7 @@ docs/       the design docs this build follows (00–10)
 - ✅ All 13 auth-matrix tests pass.
 - ✅ A request can be traced end to end (`jwt.validate → openfga.check → db`), and
   every rejection point (401/403/404) is nameable.
-- ✅ Why *an org admin can view a project with no project tuple*: the
-  `viewer: … or member from org` traversal. (`project → org → member ← admin`.)
+- ✅ Multi-tenant: an **org is a tenant**; **projects are private** (visible only
+  to explicit members). Each org gets a default "General" project and new members
+  are auto-added to it as editors. Manage members from the **Members** page (org)
+  and each project's **Settings** (project), adding users by search.

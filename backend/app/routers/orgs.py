@@ -21,6 +21,7 @@ from app.core.auth import DBUser
 from app.core.authz import authz, require
 from app.db.session import get_db
 from app.models.org import Org, OrgMember, OrgRole
+from app.models.project import Project, ProjectMember, ProjectRole
 from app.models.user import User
 from app.schemas.common import MemberOut
 from app.schemas.org import (
@@ -38,13 +39,31 @@ Db = Annotated[AsyncSession, Depends(get_db)]
 
 @router.post("", response_model=OrgOut, status_code=status.HTTP_201_CREATED)
 async def create_org(body: OrgCreate, user: DBUser, db: Db):
-    """Create an org; the creator becomes org admin. (Auth: any logged-in user.)"""
+    """
+    Create an org; the creator becomes org admin. Also seeds a default project
+    ("General") owned by the creator — org members get auto-added to it so they
+    have somewhere to work immediately (projects are private otherwise).
+    """
     org = Org(name=body.name)
     db.add(org)
     await db.flush()
     db.add(OrgMember(org_id=org.id, user_id=user.id, role=OrgRole.admin))
+
+    default_project = Project(
+        org_id=org.id, name="General", description="Default project", is_default=True
+    )
+    db.add(default_project)
     await db.flush()
+    db.add(
+        ProjectMember(
+            project_id=default_project.id, user_id=user.id, role=ProjectRole.owner
+        )
+    )
+    await db.flush()
+
     await authz.write(f"user:{user.keycloak_sub}", "admin", f"org:{org.id}")
+    await authz.write(f"org:{org.id}", "org", f"project:{default_project.id}")
+    await authz.write(f"user:{user.keycloak_sub}", "owner", f"project:{default_project.id}")
     return org
 
 
@@ -111,6 +130,29 @@ async def add_org_member(org_id: uuid.UUID, body: OrgMemberCreate, user: DBUser,
     db.add(OrgMember(org_id=org_id, user_id=body.user_id, role=body.role))
     await db.flush()
     await authz.write(f"user:{target.keycloak_sub}", body.role.value, f"org:{org_id}")
+
+    # Auto-add to the org's default project as editor, so the new member can
+    # work immediately (projects are private — org membership alone grants nothing).
+    default_project = (
+        await db.execute(
+            select(Project).where(Project.org_id == org_id, Project.is_default.is_(True))
+        )
+    ).scalar_one_or_none()
+    if default_project is not None and (
+        await db.get(ProjectMember, (default_project.id, body.user_id)) is None
+    ):
+        db.add(
+            ProjectMember(
+                project_id=default_project.id,
+                user_id=body.user_id,
+                role=ProjectRole.editor,
+            )
+        )
+        await db.flush()
+        await authz.write(
+            f"user:{target.keycloak_sub}", "editor", f"project:{default_project.id}"
+        )
+
     return MemberOut(user_id=body.user_id, username=target.username, role=body.role.value)
 
 

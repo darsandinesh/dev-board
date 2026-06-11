@@ -1,8 +1,15 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
+
 import { Avatar } from "@/components/Avatar";
 import { Loader } from "@/components/Loader";
-import { useProjectMembers, useUpdateMemberRole } from "@/lib/api";
+import {
+  useMe,
+  useProjectMembers,
+  useRemoveProjectMember,
+  useUpdateMemberRole,
+} from "@/lib/api";
 
 const ROLES = ["owner", "editor", "viewer"];
 
@@ -13,8 +20,10 @@ export function MemberTable({
   projectId: string;
   canManage: boolean;
 }) {
+  const { data: me } = useMe();
   const { data: members, isLoading } = useProjectMembers(projectId);
   const updateRole = useUpdateMemberRole(projectId);
+  const removeMember = useRemoveProjectMember(projectId);
 
   if (isLoading)
     return (
@@ -25,33 +34,51 @@ export function MemberTable({
 
   return (
     <ul className="divide-y">
-      {members?.map((m) => (
-        <li key={m.user_id} className="flex items-center justify-between py-3">
-          <div className="flex items-center gap-3">
-            <Avatar name={m.username} size={32} />
-            <span className="font-medium text-slate-700">{m.username}</span>
-          </div>
-          {canManage ? (
-            <select
-              value={m.role}
-              onChange={(e) =>
-                updateRole.mutate({ userId: m.user_id, role: e.target.value })
-              }
-              className="rounded-lg border px-2.5 py-1.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-            >
-              {ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-              {m.role}
-            </span>
-          )}
-        </li>
-      ))}
+      {members?.map((m) => {
+        const isSelf = m.user_id === me?.id;
+        return (
+          <li key={m.user_id} className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-3">
+              <Avatar name={m.username} size={32} />
+              <span className="font-medium text-slate-700">
+                {m.username}
+                {isSelf && <span className="ml-1 text-xs text-slate-400">(you)</span>}
+              </span>
+            </div>
+            {canManage ? (
+              <div className="flex items-center gap-2">
+                <select
+                  value={m.role}
+                  disabled={isSelf}
+                  onChange={(e) =>
+                    updateRole.mutate({ userId: m.user_id, role: e.target.value })
+                  }
+                  className="rounded-lg border px-2.5 py-1.5 text-sm outline-none focus:border-indigo-500 disabled:bg-slate-50 disabled:text-slate-400"
+                >
+                  {ROLES.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+                {!isSelf && (
+                  <button
+                    onClick={() => removeMember.mutate(m.user_id)}
+                    title="Remove from project"
+                    className="rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                {m.role}
+              </span>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

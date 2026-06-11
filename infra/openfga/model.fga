@@ -13,7 +13,9 @@ type project
     define org: [org]
     define owner: [user]
     define editor: [user] or owner
-    define viewer: [user] or editor or member from org
+    # Private projects: visibility requires an explicit project tuple
+    # (owner/editor/viewer). Org membership alone does NOT grant viewing.
+    define viewer: [user] or editor
 
 type task
   relations

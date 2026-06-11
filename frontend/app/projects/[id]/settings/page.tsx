@@ -4,14 +4,24 @@ import { ArrowLeft, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
+import { AddMemberSearch } from "@/components/AddMemberSearch";
 import { LoaderScreen } from "@/components/Loader";
 import { MemberTable } from "@/components/MemberTable";
-import { usePermissions, useProject } from "@/lib/api";
+import {
+  useAddProjectMember,
+  usePermissions,
+  useProject,
+  useProjectMembers,
+} from "@/lib/api";
+
+const PROJECT_ROLES = ["owner", "editor", "viewer"];
 
 export default function ProjectSettingsPage() {
   const { id } = useParams<{ id: string }>();
   const { data: project } = useProject(id);
   const { data: perms, isLoading } = usePermissions(`project:${id}`);
+  const { data: members } = useProjectMembers(id);
+  const addMember = useAddProjectMember(id);
 
   if (isLoading) return <LoaderScreen message="Loading project" />;
 
@@ -37,12 +47,29 @@ export default function ProjectSettingsPage() {
         <h2 className="flex items-center gap-2 font-semibold text-slate-900">
           <Users className="h-5 w-5 text-indigo-600" /> Members
         </h2>
-        {!perms?.is_owner && (
+        {perms?.is_owner ? (
+          <p className="mt-1 text-sm text-slate-500">
+            Add people to this project. They’ll only see it once added (projects
+            are private).
+          </p>
+        ) : (
           <p className="mt-1 text-xs text-slate-400">
-            Read-only — only the project owner can change roles.
+            Read-only — only the project owner can manage members.
           </p>
         )}
-        <div className="mt-4">
+
+        {perms?.is_owner && (
+          <div className="mt-4">
+            <AddMemberSearch
+              roles={PROJECT_ROLES}
+              excludeIds={(members ?? []).map((m) => m.user_id)}
+              pending={addMember.isPending}
+              onAdd={(userId, role) => addMember.mutate({ userId, role })}
+            />
+          </div>
+        )}
+
+        <div className="mt-5">
           <MemberTable projectId={id} canManage={!!perms?.is_owner} />
         </div>
       </section>

@@ -44,15 +44,19 @@ async def test_06_valid_token_no_perms(client, seed):
     assert r.status_code == 403
 
 
-async def test_07_org_admin_views_org_project(client, seed):
-    # alice is org admin; the project has NO project tuple for alice's viewing
-    # other than owner — to isolate member-from-org, use a second org admin.
+async def test_07_private_projects_org_member_denied(client, seed):
+    # Private projects: org membership alone does NOT grant viewing. dave is an
+    # org admin but has no tuple on this (non-default) project -> denied.
     org = await seed.org(admin="alice")
-    proj = await seed.project(org, owner="alice")
+    proj = await seed.project(org, owner="alice")  # a non-default project
     await seed.add_org_member(org, admin="alice", user="dave", role="admin")
-    # dave has no project tuple at all, only org admin -> member -> viewer
     r = await client.get(f"/projects/{proj}", headers=bearer("dave"))
-    assert r.status_code == 200
+    assert r.status_code == 403
+    # dave IS auto-added to the org's default project (editor), and the private
+    # project does not appear in his listing.
+    listed = (await client.get("/projects", headers=bearer("dave"))).json()
+    assert any(p["name"] == "General" and p["my_role"] == "editor" for p in listed)
+    assert all(p["id"] != proj for p in listed)
 
 
 async def test_08_viewer_cannot_edit(client, seed):

@@ -168,8 +168,9 @@ async def my_permissions(object: str, user: AuthUser):
 # ---------------------------------------------------------------------------
 # Routers (Day 2: JWT-gated CRUD; authz wired in Day 3)
 # ---------------------------------------------------------------------------
-from app.routers import orgs, projects, tasks  # noqa: E402
+from app.routers import orgs, projects, tasks, users  # noqa: E402
 
 app.include_router(orgs.router, prefix="/orgs", tags=["orgs"])
 app.include_router(projects.router, prefix="/projects", tags=["projects"])
 app.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
+app.include_router(users.router, prefix="/users", tags=["users"])

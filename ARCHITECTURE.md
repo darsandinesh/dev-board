@@ -98,16 +98,23 @@ The OpenFGA model (`infra/openfga/model.fga`):
 type user
 type org      admin:[user];  member:[user] or admin
 type project  org:[org];  owner:[user];  editor:[user] or owner
-              viewer:[user] or editor or member from org
+              viewer:[user] or editor                 # private — explicit only
 type task     project:[project];  can_edit: editor from project
                                    can_view: viewer from project
 ```
 
-`viewer: ... or member from org` is why **an org admin can view any project in
-their org with no project-level tuple** — the check traverses
-`project → org → member (← admin)`. And `can_edit: editor from project` means a
-task's edit permission is *computed* from the parent project, so moving a task
-between projects re-derives all permissions by rewriting one tuple.
+**Projects are private**: `viewer` resolves only from an explicit project tuple
+(owner/editor/viewer). Org membership alone grants *no* project visibility — a
+user sees only the projects they've been added to. To make a tenant usable, each
+org auto-creates a **default project** ("General") and every new org member is
+auto-added to it as `editor` (an explicit tuple). `can_edit: editor from project`
+means a task's edit permission is *computed* from its parent project, so moving a
+task between projects re-derives all permissions by rewriting one tuple.
+
+> Earlier revisions used `viewer: … or member from org` (every org member could
+> view every project). That was dropped in favor of private projects — the
+> membership boundary is now the org, but the *visibility* boundary is the
+> project.
 
 ## Why ReBAC, not roles-in-the-JWT
 
@@ -136,8 +143,9 @@ JWT claims are never trusted for permissions.
    role change can also affect *other* users (org-structure changes). I'd compute
    the affected set and invalidate precisely, or subscribe to OpenFGA's changelog.
 
-3. **Private projects.** The model grants every org member `viewer` on every
-   project (`or member from org`). For truly private projects I'd drop that
-   clause and grant viewers explicitly — a one-line model change with a big
-   blast radius, so it belongs behind a per-project visibility flag.
+3. **Org-wide visibility as an option.** Projects are now private (explicit
+   membership only). A useful enhancement would be a per-project visibility flag
+   that re-enables `or member from org` for projects an org wants open to all
+   members — letting each project choose private vs. org-visible instead of one
+   global rule.
 ```

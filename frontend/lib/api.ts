@@ -203,3 +203,86 @@ export function useUpdateMemberRole(projectId: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["members", projectId] }),
   });
 }
+
+export function useAddProjectMember(projectId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
+      authedFetch<Member>(`/projects/${projectId}/members`, {
+        method: "POST",
+        body: JSON.stringify({ user_id: userId, role }),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["members", projectId] }),
+  });
+}
+
+export function useRemoveProjectMember(projectId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) =>
+      authedFetch<null>(`/projects/${projectId}/members/${userId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["members", projectId] }),
+  });
+}
+
+// ---- user search ------------------------------------------------------------
+export interface UserResult {
+  id: string;
+  username: string;
+  email: string;
+}
+
+export function useUserSearch(query: string) {
+  return useQuery({
+    queryKey: ["users", query],
+    queryFn: () =>
+      authedFetch<UserResult[]>(`/users?search=${encodeURIComponent(query)}`),
+  });
+}
+
+// ---- org members ------------------------------------------------------------
+export function useOrgMembers(orgId: string | null) {
+  return useQuery({
+    queryKey: ["org-members", orgId],
+    enabled: !!orgId,
+    queryFn: () => authedFetch<Member[]>(`/orgs/${orgId}/members`),
+  });
+}
+
+export function useAddOrgMember(orgId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
+      authedFetch<Member>(`/orgs/${orgId}/members`, {
+        method: "POST",
+        body: JSON.stringify({ user_id: userId, role }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["org-members", orgId] });
+      qc.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+}
+
+export function useUpdateOrgMemberRole(orgId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
+      authedFetch<Member>(`/orgs/${orgId}/members/${userId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ role }),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["org-members", orgId] }),
+  });
+}
+
+export function useRemoveOrgMember(orgId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) =>
+      authedFetch<null>(`/orgs/${orgId}/members/${userId}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["org-members", orgId] }),
+  });
+}

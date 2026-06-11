@@ -8,6 +8,7 @@ import {
   Settings,
   SquareKanban,
   User,
+  Users,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
@@ -17,6 +18,7 @@ import { useUiStore } from "@/lib/store";
 
 const NAV = [
   { href: "/", label: "Projects", icon: LayoutDashboard, exact: true },
+  { href: "/members", label: "Members", icon: Users, exact: false },
   { href: "/profile", label: "Profile", icon: User, exact: false },
   { href: "/settings", label: "Settings", icon: Settings, exact: false },
 ];

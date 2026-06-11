@@ -1,0 +1,22 @@
+model
+  schema 1.1
+
+type user
+
+type org
+  relations
+    define admin: [user]
+    define member: [user] or admin
+
+type project
+  relations
+    define org: [org]
+    define owner: [user]
+    define editor: [user] or owner
+    define viewer: [user] or editor or member from org
+
+type task
+  relations
+    define project: [project]
+    define can_edit: editor from project
+    define can_view: viewer from project

@@ -1,0 +1,100 @@
+{
+  "realm": "devboard",
+  "enabled": true,
+  "displayName": "DevBoard",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "accessTokenLifespan": 300,
+  "ssoSessionMaxLifespan": 36000,
+  "clients": [
+    {
+      "clientId": "devboard-app",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "devboard-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:3001/*",
+        "http://localhost:8000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3001",
+        "http://localhost:8000"
+      ],
+      "protocolMappers": [
+        {
+          "name": "audience-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "devboard-app",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "username-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "config": {
+            "user.attribute": "username",
+            "claim.name": "preferred_username",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "alice",
+      "email": "alice@devboard.local",
+      "firstName": "Alice",
+      "lastName": "Admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "password123", "temporary": false }
+      ]
+    },
+    {
+      "username": "bob",
+      "email": "bob@devboard.local",
+      "firstName": "Bob",
+      "lastName": "Editor",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "password123", "temporary": false }
+      ]
+    },
+    {
+      "username": "carol",
+      "email": "carol@devboard.local",
+      "firstName": "Carol",
+      "lastName": "Viewer",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "password123", "temporary": false }
+      ]
+    },
+    {
+      "username": "dave",
+      "email": "dave@devboard.local",
+      "firstName": "Dave",
+      "lastName": "Member",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "password123", "temporary": false }
+      ]
+    }
+  ]
+}

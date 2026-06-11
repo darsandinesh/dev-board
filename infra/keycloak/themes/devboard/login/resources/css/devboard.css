@@ -16,24 +16,17 @@ body {
   padding-top: 8vh;
 }
 
-/* Brand mark above the card */
-.login-pf-page .login-pf-header {
-  position: relative;
-}
+/* Brand logo above the card (served from this theme's resources/img) */
 .login-pf-page .login-pf-header::before {
-  content: "◳ DevBoard";
+  content: "";
   display: block;
+  height: 44px;
   margin: 0 auto 1.25rem;
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #ffffff;
-  text-align: center;
+  background: url("../img/logo.svg") center / contain no-repeat;
 }
+/* Hide the realm display-name heading — the logo carries the brand. */
 .login-pf-page .login-pf-header h1 {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 0.95rem;
-  font-weight: 500;
+  display: none;
 }
 
 /* Card */

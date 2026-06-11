@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" fill="none">
+  <rect x="0" y="8" width="32" height="32" rx="7" fill="#ffffff"/>
+  <rect x="8" y="15" width="3.4" height="18" rx="1.7" fill="#4f46e5"/>
+  <rect x="14.3" y="15" width="3.4" height="11" rx="1.7" fill="#7c3aed"/>
+  <rect x="20.1" y="15" width="3.4" height="22" rx="1.7" fill="#4f46e5"/>
+  <text x="44" y="32" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif"
+        font-size="24" font-weight="700" fill="#ffffff" letter-spacing="-0.5">DevBoard</text>
+</svg>

@@ -56,12 +56,12 @@ async def list_my_orgs(user: DBUser, db: Db):
         .join(OrgMember, OrgMember.org_id == Org.id)
         .where(OrgMember.user_id == user.id)
     )
-    items: list[OrgListItem] = []
-    for org, role in rows.all():
-        item = OrgListItem.model_validate(org)
-        item.my_role = role.value
-        items.append(item)
-    return items
+    return [
+        OrgListItem(
+            id=org.id, name=org.name, created_at=org.created_at, my_role=role.value
+        )
+        for org, role in rows.all()
+    ]
 
 
 @router.get(

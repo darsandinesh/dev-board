@@ -22,6 +22,18 @@ async def test_org_create_and_members(client, seed):
     assert {"alice", "bob"} <= usernames
 
 
+async def test_list_my_orgs(client, seed):
+    org = await seed.org(admin="alice")
+    r = await client.get("/orgs", headers=bearer("alice"))
+    assert r.status_code == 200
+    mine = {(o["id"], o["my_role"]) for o in r.json()}
+    assert (org, "admin") in mine
+    # a non-member sees none of it
+    await seed.provision("carol")
+    r2 = await client.get("/orgs", headers=bearer("carol"))
+    assert all(o["id"] != org for o in r2.json())
+
+
 async def test_project_lifecycle(client, seed):
     org = await seed.org(admin="alice")
     proj = await seed.project(org, owner="alice")

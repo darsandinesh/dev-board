@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Building2,
   LayoutDashboard,
   LogOut,
   PanelLeftClose,
@@ -14,10 +15,20 @@ import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useMe } from "@/lib/api";
 import { useUiStore } from "@/lib/store";
 
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  exact: boolean;
+  platformAdmin?: boolean;
+};
+
+const NAV: NavItem[] = [
   { href: "/", label: "Projects", icon: LayoutDashboard, exact: true },
+  { href: "/tenants", label: "Tenants", icon: Building2, exact: false, platformAdmin: true },
   { href: "/members", label: "Members", icon: Users, exact: false },
   { href: "/profile", label: "Profile", icon: User, exact: false },
   { href: "/settings", label: "Settings", icon: Settings, exact: false },
@@ -27,6 +38,8 @@ export function Sidebar() {
   const pathname = usePathname();
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const toggle = useUiStore((s) => s.toggleSidebar);
+  const { data: me } = useMe();
+  const nav = NAV.filter((n) => !n.platformAdmin || me?.is_platform_admin);
 
   return (
     <aside
@@ -60,7 +73,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-2">
-        {NAV.map(({ href, label, icon: Icon, exact }) => {
+        {nav.map(({ href, label, icon: Icon, exact }) => {
           const active = exact ? pathname === href : pathname.startsWith(href);
           return (
             <Link

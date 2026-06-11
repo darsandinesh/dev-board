@@ -1,0 +1,90 @@
+/* DevBoard custom login theme — brand the Keycloak login screen. */
+
+:root {
+  --db-indigo: #4f46e5;
+  --db-indigo-dark: #4338ca;
+}
+
+/* Indigo→violet gradient background */
+body.login-pf,
+.login-pf body,
+body {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+}
+
+.login-pf-page {
+  padding-top: 8vh;
+}
+
+/* Brand mark above the card */
+.login-pf-page .login-pf-header {
+  position: relative;
+}
+.login-pf-page .login-pf-header::before {
+  content: "◳ DevBoard";
+  display: block;
+  margin: 0 auto 1.25rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  text-align: center;
+}
+.login-pf-page .login-pf-header h1 {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Card */
+.login-pf-page .card-pf {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
+  padding: 2rem 2.25rem;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+/* Inputs */
+.login-pf-page .form-control,
+.login-pf-page input[type="text"],
+.login-pf-page input[type="password"],
+.login-pf-page input[type="email"] {
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  padding: 0.6rem 0.75rem;
+  height: auto;
+  box-shadow: none;
+}
+.login-pf-page .form-control:focus {
+  border-color: var(--db-indigo);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+/* Primary button */
+.login-pf-page .btn-primary,
+.login-pf-page input[type="submit"],
+.login-pf-page .pf-c-button.pf-m-primary {
+  background: var(--db-indigo) !important;
+  border-color: var(--db-indigo) !important;
+  border-radius: 10px;
+  font-weight: 600;
+  padding: 0.6rem 1rem;
+}
+.login-pf-page .btn-primary:hover,
+.login-pf-page input[type="submit"]:hover,
+.login-pf-page .pf-c-button.pf-m-primary:hover {
+  background: var(--db-indigo-dark) !important;
+  border-color: var(--db-indigo-dark) !important;
+}
+
+/* Links */
+.login-pf-page a {
+  color: var(--db-indigo);
+}
+
+/* Footer */
+#kc-info-wrapper {
+  border-radius: 0 0 16px 16px;
+}

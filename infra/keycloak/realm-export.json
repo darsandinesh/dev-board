@@ -125,5 +125,6 @@
         "clientRole": false
       }
     ]
-  }
+  },
+  "loginTheme": "devboard"
 }

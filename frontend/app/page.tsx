@@ -84,10 +84,12 @@ export default function HomePage() {
 
         {adminOrgs.length === 0 ? (
           <p className="text-sm text-slate-500">
-            <Link href="/settings" className="text-indigo-600 hover:underline">
-              Create an organization
+            You need to be an admin of an organization to add projects. Tenants
+            are provisioned from the{" "}
+            <Link href="/tenants" className="text-indigo-600 hover:underline">
+              Tenants
             </Link>{" "}
-            to start adding projects.
+            page (platform admins).
           </p>
         ) : (
           <form

@@ -43,6 +43,8 @@ services:
       - "8080:8080"
     volumes:
       - ./infra/keycloak:/opt/keycloak/data/import
+      # Custom "devboard" login theme (alongside the built-in themes).
+      - ./infra/keycloak/themes/devboard:/opt/keycloak/themes/devboard
     depends_on:
       postgres:
         condition: service_healthy

@@ -17,7 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import DBUser
+from app.core.auth import AuthUser, DBUser
 from app.core.authz import PLATFORM_OBJECT, authz, require, require_platform_admin
 from app.db.session import get_db
 from app.models.org import Org, OrgMember, OrgRole
@@ -50,10 +50,17 @@ async def create_org(body: OrgCreate, user: DBUser, db: Db):
     org members get auto-added to it so they have somewhere to work immediately
     (projects are private otherwise).
     """
+    # The first tenant-admin: an explicitly chosen user, or the creator.
+    admin_user = user
+    if body.admin_user_id is not None:
+        admin_user = await db.get(User, body.admin_user_id)
+        if admin_user is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Admin user not found")
+
     org = Org(name=body.name)
     db.add(org)
     await db.flush()
-    db.add(OrgMember(org_id=org.id, user_id=user.id, role=OrgRole.admin))
+    db.add(OrgMember(org_id=org.id, user_id=admin_user.id, role=OrgRole.admin))
 
     default_project = Project(
         org_id=org.id, name="General", description="Default project", is_default=True
@@ -62,23 +69,39 @@ async def create_org(body: OrgCreate, user: DBUser, db: Db):
     await db.flush()
     db.add(
         ProjectMember(
-            project_id=default_project.id, user_id=user.id, role=ProjectRole.owner
+            project_id=default_project.id, user_id=admin_user.id, role=ProjectRole.owner
         )
     )
     await db.flush()
 
     # Link the org under the platform (so platform-admins cascade into it),
-    # make the creator tenant-admin, and own the default project.
+    # make the chosen user tenant-admin, and own the default project.
     await authz.write(PLATFORM_OBJECT, "platform", f"org:{org.id}")
-    await authz.write(f"user:{user.keycloak_sub}", "admin", f"org:{org.id}")
+    await authz.write(f"user:{admin_user.keycloak_sub}", "admin", f"org:{org.id}")
     await authz.write(f"org:{org.id}", "org", f"project:{default_project.id}")
-    await authz.write(f"user:{user.keycloak_sub}", "owner", f"project:{default_project.id}")
+    await authz.write(f"user:{admin_user.keycloak_sub}", "owner", f"project:{default_project.id}")
     return org
 
 
 @router.get("", response_model=list[OrgListItem])
-async def list_my_orgs(user: DBUser, db: Db):
-    """Orgs the caller belongs to (scoped via org_members), with their role."""
+async def list_my_orgs(current: AuthUser, user: DBUser, db: Db):
+    """Orgs the caller belongs to. A platform-admin sees every tenant (admin via
+    the platform cascade), so their role shows as admin where no explicit row."""
+    if current.is_platform_admin:
+        rows = await db.execute(
+            select(Org, OrgMember.role).outerjoin(
+                OrgMember,
+                (OrgMember.org_id == Org.id) & (OrgMember.user_id == user.id),
+            )
+        )
+        return [
+            OrgListItem(
+                id=org.id, name=org.name, created_at=org.created_at,
+                my_role=role.value if role is not None else "admin",
+            )
+            for org, role in rows.all()
+        ]
+
     rows = await db.execute(
         select(Org, OrgMember.role)
         .join(OrgMember, OrgMember.org_id == Org.id)

@@ -112,8 +112,8 @@ export function useOrgs() {
 export function useCreateOrg() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (name: string) =>
-      authedFetch<Org>("/orgs", { method: "POST", body: JSON.stringify({ name }) }),
+    mutationFn: (body: { name: string; admin_user_id?: string | null }) =>
+      authedFetch<Org>("/orgs", { method: "POST", body: JSON.stringify(body) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["orgs"] }),
   });
 }

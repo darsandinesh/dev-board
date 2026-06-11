@@ -1,17 +1,15 @@
 "use client";
 
-import { Building2, LogOut, Plus, UserCircle } from "lucide-react";
+import { Building2, LogOut, UserCircle } from "lucide-react";
+import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { useState } from "react";
 
-import { useCreateOrg, useMe, useOrgs } from "@/lib/api";
+import { useMe, useOrgs } from "@/lib/api";
 import { roleLabel } from "@/lib/roles";
 
 export default function SettingsPage() {
   const { data: me } = useMe();
   const { data: orgs } = useOrgs();
-  const createOrg = useCreateOrg();
-  const [orgName, setOrgName] = useState("");
 
   return (
     <div className="space-y-6">
@@ -38,40 +36,24 @@ export default function SettingsPage() {
         </p>
       </section>
 
-      {/* Organizations */}
+      {/* Organizations (read-only list; provisioning lives under Tenants) */}
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
         <h2 className="flex items-center gap-2 font-semibold text-slate-900">
-          <Building2 className="h-5 w-5 text-indigo-600" /> Organizations
+          <Building2 className="h-5 w-5 text-indigo-600" /> Your organizations
         </h2>
         <p className="mt-1 text-sm text-slate-500">
-          {me?.is_platform_admin
-            ? "As a platform admin, you can provision new tenants."
-            : "Tenants are provisioned by a platform admin. You manage the orgs you belong to."}
+          {me?.is_platform_admin ? (
+            <>
+              Provision new tenants from the{" "}
+              <Link href="/tenants" className="text-indigo-600 hover:underline">
+                Tenants
+              </Link>{" "}
+              page.
+            </>
+          ) : (
+            "Tenants are provisioned by a platform admin. Manage members from the Members page."
+          )}
         </p>
-
-        {me?.is_platform_admin && (
-          <form
-            className="mt-4 flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!orgName.trim()) return;
-              createOrg.mutate(orgName, { onSuccess: () => setOrgName("") });
-            }}
-          >
-            <input
-              value={orgName}
-              onChange={(e) => setOrgName(e.target.value)}
-              placeholder="New tenant / organization name"
-              className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-            />
-            <button
-              disabled={createOrg.isPending}
-              className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
-            >
-              <Plus className="h-4 w-4" /> Create
-            </button>
-          </form>
-        )}
 
         {orgs && orgs.length > 0 && (
           <ul className="mt-4 divide-y">

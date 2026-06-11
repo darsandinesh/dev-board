@@ -10,6 +10,8 @@ from app.models.org import OrgRole
 
 class OrgCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
+    # Optional: assign the first tenant-admin (defaults to the creator).
+    admin_user_id: uuid.UUID | None = None
 
 
 class OrgOut(BaseModel):

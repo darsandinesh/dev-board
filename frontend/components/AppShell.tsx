@@ -1,7 +1,7 @@
 "use client";
 
-import { LogOut, SquareKanban } from "lucide-react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { SquareKanban } from "lucide-react";
+import { signIn, useSession } from "next-auth/react";
 import type { ReactNode } from "react";
 
 import { Avatar } from "./Avatar";
@@ -46,19 +46,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex h-screen overflow-hidden bg-slate-50">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 shrink-0 items-center justify-end gap-3 border-b bg-white px-6">
-          <div className="flex items-center gap-2 text-sm">
-            <Avatar name={name} size={28} />
-            <span className="font-medium text-slate-700">{name}</span>
-          </div>
-          <button
-            onClick={() => signOut({ callbackUrl: "/" })}
-            title="Sign out"
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign out
-          </button>
+        <header className="flex h-14 shrink-0 items-center justify-end gap-2 border-b bg-white px-6">
+          <Avatar name={name} size={28} />
+          <span className="text-sm font-medium text-slate-700">{name}</span>
         </header>
         <main className="flex-1 overflow-auto p-6">
           <div className="mx-auto max-w-6xl animate-fade-in">{children}</div>

@@ -2,12 +2,14 @@
 
 import {
   LayoutDashboard,
+  LogOut,
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
   SquareKanban,
   User,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -30,18 +32,18 @@ export function Sidebar() {
         collapsed ? "w-16" : "w-60"
       }`}
     >
-      {/* brand + collapse toggle */}
+      {/* brand + collapse toggle — the logo stays visible when collapsed */}
       <div
-        className={`flex items-center py-4 text-white ${
-          collapsed ? "justify-center px-0" : "justify-between px-5"
+        className={`py-4 text-white ${
+          collapsed ? "flex flex-col items-center gap-3" : "flex items-center justify-between px-5"
         }`}
       >
-        {!collapsed && (
-          <div className="flex items-center gap-2">
-            <SquareKanban className="h-6 w-6 text-indigo-400" />
+        <div className="flex items-center gap-2">
+          <SquareKanban className="h-6 w-6 text-indigo-400" />
+          {!collapsed && (
             <span className="text-lg font-semibold tracking-tight">DevBoard</span>
-          </div>
-        )}
+          )}
+        </div>
         <button
           onClick={toggle}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -78,9 +80,19 @@ export function Sidebar() {
         })}
       </nav>
 
-      {!collapsed && (
-        <div className="px-5 py-4 text-xs text-slate-500">Keycloak · OpenFGA</div>
-      )}
+      {/* footer: sign out */}
+      <div className="border-t border-slate-800 p-3">
+        <button
+          onClick={() => signOut({ callbackUrl: "/" })}
+          title={collapsed ? "Sign out" : undefined}
+          className={`flex w-full items-center gap-3 rounded-lg py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white ${
+            collapsed ? "justify-center px-0" : "px-3"
+          }`}
+        >
+          <LogOut className="h-5 w-5 shrink-0" />
+          {!collapsed && "Sign out"}
+        </button>
+      </div>
     </aside>
   );
 }

@@ -31,6 +31,13 @@ export interface Task {
   position: number;
 }
 
+export interface Org {
+  id: string;
+  name: string;
+  created_at: string;
+  my_role: string;
+}
+
 export interface Member {
   user_id: string;
   username: string;
@@ -74,6 +81,34 @@ export function useProjects() {
   return useQuery({
     queryKey: ["projects"],
     queryFn: () => authedFetch<Project[]>("/projects"),
+  });
+}
+
+export function useOrgs() {
+  return useQuery({
+    queryKey: ["orgs"],
+    queryFn: () => authedFetch<Org[]>("/orgs"),
+  });
+}
+
+export function useCreateOrg() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) =>
+      authedFetch<Org>("/orgs", { method: "POST", body: JSON.stringify({ name }) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["orgs"] }),
+  });
+}
+
+export function useCreateProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { org_id: string; name: string; description?: string }) =>
+      authedFetch<Project>("/projects", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["projects"] }),
   });
 }
 

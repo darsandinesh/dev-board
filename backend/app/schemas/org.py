@@ -20,6 +20,12 @@ class OrgOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class OrgListItem(OrgOut):
+    # The caller's role in this org (admin|member) — lets the UI enable the
+    # "new project" action only for orgs the user administers.
+    my_role: str
+
+
 class OrgMemberCreate(BaseModel):
     user_id: uuid.UUID
     role: OrgRole = OrgRole.member

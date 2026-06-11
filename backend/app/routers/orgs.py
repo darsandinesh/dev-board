@@ -23,7 +23,13 @@ from app.db.session import get_db
 from app.models.org import Org, OrgMember, OrgRole
 from app.models.user import User
 from app.schemas.common import MemberOut
-from app.schemas.org import OrgCreate, OrgMemberCreate, OrgMemberRoleUpdate, OrgOut
+from app.schemas.org import (
+    OrgCreate,
+    OrgListItem,
+    OrgMemberCreate,
+    OrgMemberRoleUpdate,
+    OrgOut,
+)
 
 router = APIRouter()
 
@@ -40,6 +46,22 @@ async def create_org(body: OrgCreate, user: DBUser, db: Db):
     await db.flush()
     await authz.write(f"user:{user.keycloak_sub}", "admin", f"org:{org.id}")
     return org
+
+
+@router.get("", response_model=list[OrgListItem])
+async def list_my_orgs(user: DBUser, db: Db):
+    """Orgs the caller belongs to (scoped via org_members), with their role."""
+    rows = await db.execute(
+        select(Org, OrgMember.role)
+        .join(OrgMember, OrgMember.org_id == Org.id)
+        .where(OrgMember.user_id == user.id)
+    )
+    items: list[OrgListItem] = []
+    for org, role in rows.all():
+        item = OrgListItem.model_validate(org)
+        item.my_role = role.value
+        items.append(item)
+    return items
 
 
 @router.get(

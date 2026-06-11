@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     # App
     app_name: str = "DevBoard"
     debug: bool = True
+    enable_telemetry: bool = True  # disabled in tests (noisy console exporter)
 
     @property
     def keycloak_issuer(self) -> str:

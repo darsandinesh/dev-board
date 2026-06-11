@@ -2,8 +2,12 @@ import time
 import uuid
 
 import structlog
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.auth import AuthUser, DBUser
 from app.core.config import settings
@@ -31,6 +35,45 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ---------------------------------------------------------------------------
+# Consistent error envelope (Day 6): every error -> {detail, status,
+# correlation_id}. 401/403/404 from HTTPException, 422 from validation, and a
+# 500 fallback for anything unhandled.
+# ---------------------------------------------------------------------------
+def _error_body(detail, status_code: int) -> dict:
+    return {
+        "detail": detail,
+        "status": status_code,
+        "correlation_id": structlog.contextvars.get_contextvars().get("correlation_id"),
+    }
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=_error_body(exc.detail, exc.status_code),
+        headers=getattr(exc, "headers", None),
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content=_error_body(jsonable_encoder(exc.errors()), status.HTTP_422_UNPROCESSABLE_ENTITY),
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.error("unhandled_exception", error=str(exc), error_type=type(exc).__name__)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content=_error_body("Internal server error", status.HTTP_500_INTERNAL_SERVER_ERROR),
+    )
 
 
 @app.middleware("http")

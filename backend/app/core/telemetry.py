@@ -24,6 +24,10 @@ def setup_telemetry(app, engine) -> None:
     if _initialized:
         return
 
+    from app.core.config import settings
+    if not settings.enable_telemetry:
+        return
+
     provider = TracerProvider(resource=Resource.create({"service.name": "devboard-backend"}))
     provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
     trace.set_tracer_provider(provider)

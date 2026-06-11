@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { AddMemberSearch } from "@/components/AddMemberSearch";
+import { ErrorState } from "@/components/ErrorState";
 import { LoaderScreen } from "@/components/Loader";
 import { MemberTable } from "@/components/MemberTable";
 import {
@@ -26,7 +27,13 @@ export default function ProjectSettingsPage() {
   if (isLoading) return <LoaderScreen message="Loading project" />;
 
   if (!perms?.can_view) {
-    return <p className="text-red-600">You don’t have access to this project.</p>;
+    return (
+      <ErrorState
+        code="403"
+        title="No access to this project"
+        message="You’re not a member of this project, so its settings aren’t available."
+      />
+    );
   }
 
   return (

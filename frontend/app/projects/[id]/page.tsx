@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 
 import { Board } from "@/components/Board";
+import { ErrorState } from "@/components/ErrorState";
 import { LoaderScreen } from "@/components/Loader";
 import { Protected } from "@/components/Protected";
 import {
@@ -19,7 +20,7 @@ import {
 
 export default function ProjectBoardPage() {
   const { id } = useParams<{ id: string }>();
-  const { data: project } = useProject(id);
+  const { data: project, error: projectError } = useProject(id);
   const { data: tasks, isLoading } = useTasks(id);
   const { data: perms } = usePermissions(`project:${id}`);
   const updateTask = useUpdateTask(id);
@@ -28,6 +29,17 @@ export default function ProjectBoardPage() {
 
   const move = (taskId: string, status: TaskStatus) =>
     updateTask.mutate({ id: taskId, patch: { status } });
+
+  // Private projects: a 403/404 from the API means no access to this board.
+  if (projectError) {
+    return (
+      <ErrorState
+        code="403"
+        title="No access to this project"
+        message="You’re not a member of this project. Ask an owner to add you, or pick another project."
+      />
+    );
+  }
 
   return (
     <div className="space-y-5">

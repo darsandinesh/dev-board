@@ -5,6 +5,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import type { ReactNode } from "react";
 
 import { Avatar } from "./Avatar";
+import { Loader } from "./Loader";
 import { Sidebar } from "./Sidebar";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -12,8 +13,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (status === "loading") {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50 text-slate-400">
-        Loading…
+      <div className="flex h-screen items-center justify-center bg-slate-50">
+        <Loader size={44} />
       </div>
     );
   }
@@ -60,7 +61,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </button>
         </header>
         <main className="flex-1 overflow-auto p-6">
-          <div className="mx-auto max-w-6xl">{children}</div>
+          <div className="mx-auto max-w-6xl animate-fade-in">{children}</div>
         </main>
       </div>
     </div>

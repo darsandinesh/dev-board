@@ -5,3 +5,40 @@
 body {
   @apply bg-slate-50 text-slate-900;
 }
+
+/* --- custom kanban loader --------------------------------------------- */
+@keyframes kanbanWave {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.kanban-bar {
+  width: 0.5rem;
+  height: 100%;
+  border-radius: 9999px;
+  transform-origin: bottom;
+  animation: kanbanWave 1s ease-in-out infinite;
+}
+
+/* --- content fade-in -------------------------------------------------- */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.25s ease-out both;
+}

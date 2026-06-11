@@ -1,6 +1,7 @@
 "use client";
 
 import { Avatar } from "@/components/Avatar";
+import { Loader } from "@/components/Loader";
 import { useProjectMembers, useUpdateMemberRole } from "@/lib/api";
 
 const ROLES = ["owner", "editor", "viewer"];
@@ -15,7 +16,12 @@ export function MemberTable({
   const { data: members, isLoading } = useProjectMembers(projectId);
   const updateRole = useUpdateMemberRole(projectId);
 
-  if (isLoading) return <p className="text-slate-500">Loading members…</p>;
+  if (isLoading)
+    return (
+      <div className="flex justify-center py-6">
+        <Loader size={28} />
+      </div>
+    );
 
   return (
     <ul className="divide-y">

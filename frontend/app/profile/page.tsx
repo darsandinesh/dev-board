@@ -3,6 +3,7 @@
 import { Building2, Mail, ShieldCheck } from "lucide-react";
 
 import { Avatar } from "@/components/Avatar";
+import { LoaderScreen } from "@/components/Loader";
 import { useMe, useOrgs } from "@/lib/api";
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -20,7 +21,7 @@ export default function ProfilePage() {
   const { data: me, isLoading } = useMe();
   const { data: orgs } = useOrgs();
 
-  if (isLoading || !me) return <p className="text-slate-500">Loading…</p>;
+  if (isLoading || !me) return <LoaderScreen message="Loading profile" />;
 
   const fullName = [me.given_name, me.family_name].filter(Boolean).join(" ") || me.username;
 

@@ -4,6 +4,7 @@ import { ArrowLeft, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
+import { LoaderScreen } from "@/components/Loader";
 import { MemberTable } from "@/components/MemberTable";
 import { usePermissions, useProject } from "@/lib/api";
 
@@ -12,7 +13,7 @@ export default function ProjectSettingsPage() {
   const { data: project } = useProject(id);
   const { data: perms, isLoading } = usePermissions(`project:${id}`);
 
-  if (isLoading) return <p className="text-slate-500">Loading…</p>;
+  if (isLoading) return <LoaderScreen message="Loading project" />;
 
   if (!perms?.can_view) {
     return <p className="text-red-600">You don’t have access to this project.</p>;

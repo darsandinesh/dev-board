@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 
 import { Board } from "@/components/Board";
+import { LoaderScreen } from "@/components/Loader";
 import { Protected } from "@/components/Protected";
 import {
   useCreateTask,
@@ -87,7 +88,7 @@ export default function ProjectBoardPage() {
       </Protected>
 
       {isLoading ? (
-        <p className="text-slate-500">Loading tasks…</p>
+        <LoaderScreen message="Loading tasks" />
       ) : (
         <Board tasks={tasks ?? []} canEdit={!!perms?.can_edit} onMove={move} />
       )}

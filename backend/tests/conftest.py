@@ -14,8 +14,13 @@ Requires the stack up: docker compose up -d postgres redis openfga
 
 import os
 
-# Disable the console span exporter during tests (noisy + writes to closed
-# stdout after capture). Must be set before any app module imports settings.
+# Set BEFORE any app module imports settings:
+#  - run the suite against a DEDICATED database so tests never touch dev data
+#    (the per-test TRUNCATE below would otherwise wipe the running app's data),
+#  - disable the noisy console span exporter.
+os.environ["DATABASE_URL"] = (
+    "postgresql+asyncpg://devboard:devboard@localhost:5433/devboard_test"
+)
 os.environ["ENABLE_TELEMETRY"] = "false"
 
 import httpx
@@ -25,9 +30,15 @@ from sqlalchemy import text
 
 from app.core import auth
 from app.core.cache import redis_client
+from app.db.base import Base
 from app.db.session import engine
 from app.main import app
 from tests.helpers import bearer, test_jwks  # noqa: F401 (bearer re-exported)
+
+# Safety net: refuse to run if we somehow aren't pointed at the test DB.
+assert engine.url.database == "devboard_test", (
+    f"tests must run against devboard_test, got {engine.url.database!r}"
+)
 
 
 # --- fixtures ----------------------------------------------------------------
@@ -37,6 +48,16 @@ def _mock_jwks(monkeypatch):
     async def fake_get_jwks():
         return test_jwks()
     monkeypatch.setattr(auth, "_get_jwks", fake_get_jwks)
+
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def _create_schema():
+    """Create the schema in the test DB once per session (drop+recreate)."""
+    import app.models  # noqa: F401 — populate Base.metadata
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+    yield
 
 
 @pytest_asyncio.fixture(autouse=True)

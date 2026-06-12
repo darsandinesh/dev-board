@@ -35,6 +35,26 @@ const STATUS_PILL: Record<string, string> = {
   done: "bg-emerald-100 text-emerald-700",
 };
 
+const ACTIVITY_VERB: Record<string, string> = {
+  created: "created this issue",
+  commented: "added a comment",
+  status: "changed status",
+  priority: "changed priority",
+  type: "changed type",
+  assignee: "updated the assignee",
+  linked: "linked an issue",
+};
+
+function Chip({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <span
+      className={`inline-block rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600 ${className}`}
+    >
+      {children}
+    </span>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -273,21 +293,41 @@ export function IssueView({
                 </ul>
               </>
             ) : (
-              <ul className="space-y-1.5 border-l-2 border-slate-100 pl-3">
-                {activity?.map((a) => (
-                  <li key={a.id} className="text-xs text-slate-500">
-                    <span className="font-medium text-slate-700">{a.actor_username}</span>{" "}
-                    {a.action === "created" && "created this issue"}
-                    {a.action === "commented" && "commented"}
-                    {a.action === "status" && `changed status ${a.detail ?? ""}`}
-                    {a.action === "priority" && `changed priority ${a.detail ?? ""}`}
-                    {a.action === "type" && `changed type ${a.detail ?? ""}`}
-                    {a.action === "assignee" && `${a.detail ?? "changed assignee"}`}
-                    {a.action === "linked" && `linked ${a.detail ?? ""}`}
-                    <span className="ml-1 text-slate-300">· {new Date(a.created_at).toLocaleString()}</span>
-                  </li>
-                ))}
-                {(!activity || activity.length === 0) && <li className="text-xs text-slate-400">No activity.</li>}
+              <ul className="space-y-4">
+                {activity?.map((a) => {
+                  const fromTo =
+                    a.detail && a.detail.includes("→")
+                      ? a.detail.split("→").map((s) => s.trim())
+                      : null;
+                  return (
+                    <li key={a.id} className="flex gap-2.5">
+                      <Avatar name={a.actor_username} size={26} />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm leading-relaxed text-slate-600">
+                          <span className="font-medium text-slate-800">{a.actor_username}</span>{" "}
+                          {ACTIVITY_VERB[a.action] ?? a.action}
+                          {fromTo ? (
+                            <span className="ml-1 inline-flex items-center gap-1.5">
+                              <Chip>{fromTo[0]}</Chip>
+                              <span className="text-slate-300">→</span>
+                              <Chip>{fromTo[1]}</Chip>
+                            </span>
+                          ) : a.detail ? (
+                            <Chip className="ml-1">{a.detail}</Chip>
+                          ) : null}
+                        </div>
+                        <div className="mt-0.5 text-xs text-slate-400">
+                          {new Date(a.created_at).toLocaleString(undefined, {
+                            month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+                          })}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+                {(!activity || activity.length === 0) && (
+                  <li className="text-sm text-slate-400">No activity yet.</li>
+                )}
               </ul>
             )}
           </div>

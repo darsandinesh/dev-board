@@ -20,6 +20,7 @@ class TaskCreate(BaseModel):
     due_date: date | None = None
     assignee_id: uuid.UUID | None = None
     parent_id: uuid.UUID | None = None
+    sprint_id: uuid.UUID | None = None
     position: int = 0
 
 
@@ -36,6 +37,7 @@ class TaskUpdate(BaseModel):
     due_date: date | None = None
     assignee_id: uuid.UUID | None = None
     parent_id: uuid.UUID | None = None
+    sprint_id: uuid.UUID | None = None
     position: int | None = None
 
 
@@ -43,6 +45,7 @@ class TaskOut(BaseModel):
     id: uuid.UUID
     project_id: uuid.UUID
     parent_id: uuid.UUID | None
+    sprint_id: uuid.UUID | None
     seq: int | None
     title: str
     description: str | None

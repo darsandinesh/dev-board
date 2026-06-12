@@ -3,6 +3,7 @@
 from app.db.base import Base
 from app.models.org import Org, OrgMember, OrgRole
 from app.models.project import Project, ProjectMember, ProjectRole
+from app.models.sprint import Sprint, SprintState
 from app.models.task import (
     LinkType,
     Task,
@@ -24,6 +25,8 @@ __all__ = [
     "Project",
     "ProjectMember",
     "ProjectRole",
+    "Sprint",
+    "SprintState",
     "Task",
     "TaskComment",
     "TaskActivity",

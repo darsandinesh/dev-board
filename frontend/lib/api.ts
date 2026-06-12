@@ -25,10 +25,24 @@ export type TaskType = "epic" | "task" | "story" | "bug";
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
 export type LinkType = "blocks" | "blocked_by" | "relates_to" | "duplicates";
 
+export type SprintState = "planned" | "active" | "completed";
+
+export interface Sprint {
+  id: string;
+  project_id: string;
+  name: string;
+  goal: string | null;
+  state: SprintState;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string;
+}
+
 export interface Task {
   id: string;
   project_id: string;
   parent_id: string | null;
+  sprint_id: string | null;
   seq: number | null;
   title: string;
   description: string | null;
@@ -198,6 +212,47 @@ export function useComments(taskId: string) {
   });
 }
 
+// ---- sprints ----------------------------------------------------------------
+export function useSprints(projectId: string) {
+  return useQuery({
+    queryKey: ["sprints", projectId],
+    queryFn: () => authedFetch<Sprint[]>(`/sprints?project_id=${projectId}`),
+  });
+}
+
+export function useCreateSprint(projectId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { name: string; goal?: string }) =>
+      authedFetch<Sprint>("/sprints", {
+        method: "POST",
+        body: JSON.stringify({ project_id: projectId, ...body }),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sprints", projectId] }),
+  });
+}
+
+export function useUpdateSprint(projectId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<Sprint> }) =>
+      authedFetch<Sprint>(`/sprints/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(patch),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sprints", projectId] }),
+  });
+}
+
+export function useDeleteSprint(projectId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      authedFetch<null>(`/sprints/${id}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sprints", projectId] }),
+  });
+}
+
 export function useChildren(taskId: string) {
   return useQuery({
     queryKey: ["children", taskId],
@@ -285,6 +340,7 @@ export function useCreateTask(projectId: string) {
         id: `temp-${Date.now()}`,
         project_id: projectId,
         parent_id: null,
+        sprint_id: null,
         seq: null,
         title: body.title,
         description: null,

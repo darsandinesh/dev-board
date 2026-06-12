@@ -48,6 +48,9 @@ class Task(Base):
     parent_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("tasks.id", ondelete="SET NULL"), index=True
     )
+    sprint_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("sprints.id", ondelete="SET NULL"), index=True
+    )
     seq: Mapped[int | None]  # per-project issue number (key display: PROJ-<seq>)
     title: Mapped[str]
     description: Mapped[str | None]

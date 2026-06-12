@@ -80,6 +80,7 @@ async def create_task(body: TaskCreate, user: DBUser, db: Db):
         due_date=body.due_date,
         assignee_id=body.assignee_id,
         parent_id=body.parent_id,
+        sprint_id=body.sprint_id,
         position=body.position,
     )
     db.add(task)

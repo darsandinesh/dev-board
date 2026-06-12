@@ -15,6 +15,7 @@ import {
   useProject,
   useProjectMembers,
   useRemoveLink,
+  useSprints,
   useTasks,
   useUpdateTask,
   type LinkType,
@@ -66,6 +67,7 @@ function IssueDetail({
   const { data: tasks } = useTasks(projectId);
   const { data: project } = useProject(projectId);
   const { data: members } = useProjectMembers(projectId);
+  const { data: sprints } = useSprints(projectId);
   const { data: comments } = useComments(taskId);
   const { data: activity } = useActivity(taskId);
   const { data: children } = useChildren(taskId);
@@ -181,6 +183,15 @@ function IssueDetail({
                     {project?.key && t.seq != null ? `${project.key}-${t.seq} ` : ""}{t.title}
                   </option>
                 ))}
+            </select>
+          </Row>
+          <Row label="Sprint">
+            <select value={task.sprint_id ?? ""} disabled={ro} className={`${sel} w-full`}
+              onChange={(e) => patch({ sprint_id: e.target.value || null })}>
+              <option value="">Backlog</option>
+              {(sprints ?? []).map((s) => (
+                <option key={s.id} value={s.id}>{s.name} ({s.state})</option>
+              ))}
             </select>
           </Row>
         </div>

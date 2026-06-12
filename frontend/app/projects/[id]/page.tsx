@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 
+import { Backlog } from "@/components/Backlog";
 import { Board } from "@/components/Board";
 import { ErrorState } from "@/components/ErrorState";
 import { IssueModal } from "@/components/IssueModal";
@@ -34,6 +35,7 @@ export default function ProjectBoardPage() {
   const [typeF, setTypeF] = useState("");
   const [prioF, setPrioF] = useState("");
   const [assigneeF, setAssigneeF] = useState("");
+  const [view, setView] = useState<"board" | "backlog">("board");
 
   const assignees: Record<string, string> = Object.fromEntries(
     (members ?? []).map((m) => [m.user_id, m.username]),
@@ -98,6 +100,27 @@ export default function ProjectBoardPage() {
         </div>
       </div>
 
+      {/* View tabs */}
+      <div className="flex gap-1 border-b">
+        {(["board", "backlog"] as const).map((v) => (
+          <button
+            key={v}
+            onClick={() => setView(v)}
+            className={`-mb-px border-b-2 px-3 py-1.5 text-sm font-medium capitalize transition ${
+              view === v
+                ? "border-indigo-600 text-indigo-700"
+                : "border-transparent text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            {v}
+          </button>
+        ))}
+      </div>
+
+      {view === "backlog" && <Backlog projectId={id} canEdit={!!perms?.can_edit} />}
+
+      {view === "board" && (
+        <>
       <Protected allowed={perms?.can_edit}>
         <form
           className="flex flex-col gap-2 sm:flex-row"
@@ -186,6 +209,8 @@ export default function ProjectBoardPage() {
           assignees={assignees}
           projectKey={project?.key}
         />
+      )}
+        </>
       )}
 
       <IssueModal projectId={id} canEdit={!!perms?.can_edit} />

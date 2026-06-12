@@ -21,9 +21,15 @@ from app.core.auth import DBUser
 from app.core.authz import authz, require
 from app.db.session import get_db
 from app.models.project import Project
-from app.models.task import Task
+from app.models.task import Task, TaskComment
 from app.models.user import User
-from app.schemas.task import TaskCreate, TaskOut, TaskUpdate
+from app.schemas.task import (
+    CommentCreate,
+    CommentOut,
+    TaskCreate,
+    TaskOut,
+    TaskUpdate,
+)
 
 router = APIRouter()
 
@@ -50,6 +56,11 @@ async def create_task(body: TaskCreate, user: DBUser, db: Db):
         title=body.title,
         description=body.description,
         status=body.status,
+        type=body.type,
+        priority=body.priority,
+        labels=body.labels,
+        story_points=body.story_points,
+        due_date=body.due_date,
         assignee_id=body.assignee_id,
         position=body.position,
     )
@@ -134,3 +145,46 @@ async def delete_task(task_id: uuid.UUID, user: DBUser, db: Db):
     await authz.delete(f"project:{project_id}", "project", f"task:{task_id}")
     if assignee_sub:
         await authz.delete(f"user:{assignee_sub}", "assignee", f"task:{task_id}")
+
+
+# ---------------------------------------------------------------------------
+# Comments — anyone who can_view the task may read & post.
+# ---------------------------------------------------------------------------
+@router.get(
+    "/{task_id}/comments",
+    response_model=list[CommentOut],
+    dependencies=[Depends(require("can_view", "task", "task_id"))],
+)
+async def list_comments(task_id: uuid.UUID, user: DBUser, db: Db):
+    rows = await db.execute(
+        select(TaskComment, User.username)
+        .join(User, User.id == TaskComment.author_id)
+        .where(TaskComment.task_id == task_id)
+        .order_by(TaskComment.created_at)
+    )
+    return [
+        CommentOut(
+            id=c.id, task_id=c.task_id, author_id=c.author_id,
+            author_username=username, body=c.body, created_at=c.created_at,
+        )
+        for c, username in rows.all()
+    ]
+
+
+@router.post(
+    "/{task_id}/comments",
+    response_model=CommentOut,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require("can_view", "task", "task_id"))],
+)
+async def add_comment(task_id: uuid.UUID, body: CommentCreate, user: DBUser, db: Db):
+    if await db.get(Task, task_id) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Task not found")
+    comment = TaskComment(task_id=task_id, author_id=user.id, body=body.body)
+    db.add(comment)
+    await db.flush()
+    await db.refresh(comment)
+    return CommentOut(
+        id=comment.id, task_id=task_id, author_id=user.id,
+        author_username=user.username, body=comment.body, created_at=comment.created_at,
+    )

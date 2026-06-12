@@ -1,8 +1,9 @@
 "use client";
 
-import { GripVertical } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 
 import { Avatar } from "@/components/Avatar";
+import { PRIORITY_META, TYPE_META } from "@/components/issueMeta";
 import type { Task } from "@/lib/api";
 import { useDragStore } from "@/lib/store";
 
@@ -16,31 +17,53 @@ export function TaskCard({
   assignee?: string;
 }) {
   const setDragging = useDragStore((s) => s.setDragging);
+  const openTask = useDragStore((s) => s.openTask);
   const dragging = useDragStore((s) => s.draggingId === task.id);
+
+  const Type = TYPE_META[task.type];
+  const Prio = PRIORITY_META[task.priority];
 
   return (
     <div
       draggable={draggable}
       onDragStart={() => setDragging(task.id)}
       onDragEnd={() => setDragging(null)}
-      className={`group flex items-start gap-2 rounded-xl border bg-white p-3 text-sm shadow-sm transition ${
-        draggable ? "cursor-grab active:cursor-grabbing hover:shadow" : ""
-      } ${dragging ? "opacity-50" : ""}`}
+      onClick={() => openTask(task.id)}
+      className={`group cursor-pointer rounded-xl border bg-white p-3 text-sm shadow-sm transition hover:border-indigo-300 hover:shadow ${
+        dragging ? "opacity-50" : ""
+      }`}
     >
-      {draggable && (
-        <GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-slate-300 group-hover:text-slate-400" />
+      <div className="font-medium text-slate-800">{task.title}</div>
+
+      {task.labels.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {task.labels.map((l) => (
+            <span
+              key={l}
+              className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-500"
+            >
+              {l}
+            </span>
+          ))}
+        </div>
       )}
-      <div className="min-w-0 flex-1">
-        <div className="font-medium text-slate-800">{task.title}</div>
-        {task.description && (
-          <div className="mt-1 text-xs text-slate-500">{task.description}</div>
+
+      <div className="mt-2 flex items-center gap-2 text-xs text-slate-400">
+        <Type.icon className={`h-4 w-4 ${Type.color}`} />
+        <Prio.icon className={`h-4 w-4 ${Prio.color}`} />
+        {task.story_points != null && (
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1 font-medium text-slate-500">
+            {task.story_points}
+          </span>
         )}
-      </div>
-      {assignee && (
-        <span title={`Assigned to ${assignee}`} className="shrink-0">
-          <Avatar name={assignee} size={22} />
+        <span className="ml-auto flex items-center gap-2">
+          {assignee && (
+            <span title={`Assigned to ${assignee}`}>
+              <Avatar name={assignee} size={20} />
+            </span>
+          )}
         </span>
-      )}
+      </div>
     </div>
   );
 }

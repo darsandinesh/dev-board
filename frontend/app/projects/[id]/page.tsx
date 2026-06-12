@@ -7,6 +7,7 @@ import { useState } from "react";
 
 import { Board } from "@/components/Board";
 import { ErrorState } from "@/components/ErrorState";
+import { IssueModal } from "@/components/IssueModal";
 import { LoaderScreen } from "@/components/Loader";
 import { Protected } from "@/components/Protected";
 import {
@@ -130,6 +131,8 @@ export default function ProjectBoardPage() {
           assignees={assignees}
         />
       )}
+
+      <IssueModal projectId={id} canEdit={!!perms?.can_edit} />
     </div>
   );
 }

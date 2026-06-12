@@ -10,6 +10,10 @@ interface DragState {
   setDragging: (id: string | null) => void;
   hoverColumn: TaskStatus | null;
   setHoverColumn: (s: TaskStatus | null) => void;
+  // the task open in the detail modal (null = closed)
+  selectedTaskId: string | null;
+  openTask: (id: string) => void;
+  closeTask: () => void;
 }
 
 export const useDragStore = create<DragState>((set) => ({
@@ -17,6 +21,9 @@ export const useDragStore = create<DragState>((set) => ({
   setDragging: (id) => set({ draggingId: id }),
   hoverColumn: null,
   setHoverColumn: (s) => set({ hoverColumn: s }),
+  selectedTaskId: null,
+  openTask: (id) => set({ selectedTaskId: id }),
+  closeTask: () => set({ selectedTaskId: null }),
 }));
 
 interface UiState {

@@ -20,6 +20,8 @@ export interface Project {
 }
 
 export type TaskStatus = "todo" | "in_progress" | "done";
+export type TaskType = "task" | "story" | "bug";
+export type TaskPriority = "low" | "medium" | "high" | "urgent";
 
 export interface Task {
   id: string;
@@ -27,8 +29,24 @@ export interface Task {
   title: string;
   description: string | null;
   status: TaskStatus;
+  type: TaskType;
+  priority: TaskPriority;
+  labels: string[];
+  story_points: number | null;
+  due_date: string | null;
   assignee_id: string | null;
   position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Comment {
+  id: string;
+  task_id: string;
+  author_id: string;
+  author_username: string;
+  body: string;
+  created_at: string;
 }
 
 export interface Me {
@@ -141,6 +159,25 @@ export function useTasks(projectId: string) {
   return useQuery({
     queryKey: ["tasks", projectId],
     queryFn: () => authedFetch<Task[]>(`/tasks?project_id=${projectId}`),
+  });
+}
+
+export function useComments(taskId: string) {
+  return useQuery({
+    queryKey: ["comments", taskId],
+    queryFn: () => authedFetch<Comment[]>(`/tasks/${taskId}/comments`),
+  });
+}
+
+export function useAddComment(taskId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: string) =>
+      authedFetch<Comment>(`/tasks/${taskId}/comments`, {
+        method: "POST",
+        body: JSON.stringify({ body }),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["comments", taskId] }),
   });
 }
 

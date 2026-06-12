@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquare } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Avatar } from "@/components/Avatar";
 import { PRIORITY_META, TYPE_META } from "@/components/issueMeta";
@@ -19,8 +19,8 @@ export function TaskCard({
   projectKey?: string | null;
 }) {
   const setDragging = useDragStore((s) => s.setDragging);
-  const openTask = useDragStore((s) => s.openTask);
   const dragging = useDragStore((s) => s.draggingId === task.id);
+  const router = useRouter();
 
   const Type = TYPE_META[task.type];
   const Prio = PRIORITY_META[task.priority];
@@ -30,7 +30,7 @@ export function TaskCard({
       draggable={draggable}
       onDragStart={() => setDragging(task.id)}
       onDragEnd={() => setDragging(null)}
-      onClick={() => openTask(task.id)}
+      onClick={() => router.push(`/projects/${task.project_id}/issues/${task.id}`)}
       className={`group cursor-pointer rounded-xl border bg-white p-3 text-sm shadow-sm transition hover:border-indigo-300 hover:shadow ${
         dragging ? "opacity-50" : ""
       }`}

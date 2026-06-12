@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronRight, Play, Plus, Square, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { TYPE_META } from "@/components/issueMeta";
@@ -13,14 +14,13 @@ import {
   useUpdateSprint,
   type Task,
 } from "@/lib/api";
-import { useDragStore } from "@/lib/store";
 
 function IssueRow({ task, projectKey }: { task: Task; projectKey?: string | null }) {
-  const openTask = useDragStore((s) => s.openTask);
+  const router = useRouter();
   const Type = TYPE_META[task.type];
   return (
     <button
-      onClick={() => openTask(task.id)}
+      onClick={() => router.push(`/projects/${task.project_id}/issues/${task.id}`)}
       className="flex w-full items-center gap-2 border-t px-3 py-2 text-left text-sm first:border-t-0 hover:bg-slate-50"
     >
       <Type.icon className={`h-4 w-4 shrink-0 ${Type.color}`} />

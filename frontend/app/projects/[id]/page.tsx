@@ -9,7 +9,6 @@ import { Backlog } from "@/components/Backlog";
 import { Board } from "@/components/Board";
 import { Reports } from "@/components/Reports";
 import { ErrorState } from "@/components/ErrorState";
-import { IssueModal } from "@/components/IssueModal";
 import { LoaderScreen } from "@/components/Loader";
 import { Protected } from "@/components/Protected";
 import {
@@ -216,7 +215,6 @@ export default function ProjectBoardPage() {
         </>
       )}
 
-      <IssueModal projectId={id} canEdit={!!perms?.can_edit} />
     </div>
   );
 }

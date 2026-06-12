@@ -18,7 +18,6 @@ import {
   useNotifications,
   type Notification,
 } from "@/lib/api";
-import { useDragStore } from "@/lib/store";
 
 const KIND_ICON: Record<string, LucideIcon> = {
   assigned: UserPlus,
@@ -39,7 +38,6 @@ export function NotificationBell() {
   const markAll = useMarkAllRead();
   const markRead = useMarkRead();
   const router = useRouter();
-  const openTask = useDragStore((s) => s.openTask);
   const [open, setOpen] = useState(false);
 
   const unread = (notes ?? []).filter((n) => !n.is_read).length;
@@ -47,9 +45,10 @@ export function NotificationBell() {
   const view = (n: Notification) => {
     setOpen(false);
     if (!n.is_read) markRead.mutate(n.id);
-    if (n.project_id) {
+    if (n.project_id && n.task_id) {
+      router.push(`/projects/${n.project_id}/issues/${n.task_id}`);
+    } else if (n.project_id) {
       router.push(`/projects/${n.project_id}`);
-      if (n.task_id) setTimeout(() => openTask(n.task_id!), 60);
     }
   };
 

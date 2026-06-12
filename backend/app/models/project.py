@@ -25,6 +25,8 @@ class Project(Base):
     )
     name: Mapped[str]
     description: Mapped[str | None]
+    # Short issue-key prefix, e.g. "WEB" -> issues display as WEB-1, WEB-2…
+    key: Mapped[str | None]
     # The org's auto-created default project; org members are auto-added to it.
     is_default: Mapped[bool] = mapped_column(default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

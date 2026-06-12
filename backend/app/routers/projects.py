@@ -13,10 +13,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import DBUser
+from app.core.auth import AuthUser, DBUser
 from app.core.authz import authz, require
 from app.db.session import get_db
-from app.models.org import Org
+from app.models.org import Org, OrgMember, OrgRole
 from app.models.project import Project, ProjectMember, ProjectRole
 from app.models.user import User
 from app.schemas.common import MemberOut
@@ -28,9 +28,17 @@ from app.schemas.project import (
     ProjectOut,
 )
 
+import re
+
 router = APIRouter()
 
 Db = Annotated[AsyncSession, Depends(get_db)]
+
+
+def project_key(name: str) -> str:
+    """Derive a short issue-key prefix from a project name (e.g. Website -> WEB)."""
+    letters = re.sub(r"[^a-zA-Z]", "", name).upper()
+    return letters[:3] or "PRJ"
 
 
 @router.post("", response_model=ProjectOut, status_code=status.HTTP_201_CREATED)
@@ -41,7 +49,10 @@ async def create_project(body: ProjectCreate, user: DBUser, db: Db):
     if not await authz.check(f"user:{user.keycloak_sub}", "admin", f"org:{body.org_id}"):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
 
-    project = Project(org_id=body.org_id, name=body.name, description=body.description)
+    project = Project(
+        org_id=body.org_id, name=body.name, description=body.description,
+        key=project_key(body.name),
+    )
     db.add(project)
     await db.flush()
     db.add(ProjectMember(project_id=project.id, user_id=user.id, role=ProjectRole.owner))
@@ -53,7 +64,7 @@ async def create_project(body: ProjectCreate, user: DBUser, db: Db):
 
 
 @router.get("", response_model=list[ProjectListItem])
-async def list_projects(user: DBUser, db: Db):
+async def list_projects(current: AuthUser, user: DBUser, db: Db):
     """List projects the caller can view, via OpenFGA ListObjects(viewer, project)."""
     visible_ids = await authz.list_objects(f"user:{user.keycloak_sub}", "viewer", "project")
     # OpenFGA may know object ids the DB doesn't (e.g. stale tuples); keep only
@@ -66,6 +77,17 @@ async def list_projects(user: DBUser, db: Db):
             continue
     if not ids:
         return []
+    # Orgs where the caller is a tenant-admin → effective Admin (owner) on all
+    # their projects, even without an explicit project_members row.
+    admin_orgs = set(
+        (
+            await db.execute(
+                select(OrgMember.org_id).where(
+                    OrgMember.user_id == user.id, OrgMember.role == OrgRole.admin
+                )
+            )
+        ).scalars().all()
+    )
     rows = await db.execute(
         select(Project, ProjectMember.role)
         .outerjoin(
@@ -77,7 +99,10 @@ async def list_projects(user: DBUser, db: Db):
     items: list[ProjectListItem] = []
     for project, role in rows.all():
         item = ProjectListItem.model_validate(project)
-        item.my_role = role.value if role is not None else None
+        if current.is_platform_admin or project.org_id in admin_orgs:
+            item.my_role = "owner"  # effective Admin via cascade
+        else:
+            item.my_role = role.value if role is not None else None
         items.append(item)
     return items
 

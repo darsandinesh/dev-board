@@ -63,7 +63,8 @@ async def create_org(body: OrgCreate, user: DBUser, db: Db):
     db.add(OrgMember(org_id=org.id, user_id=admin_user.id, role=OrgRole.admin))
 
     default_project = Project(
-        org_id=org.id, name="General", description="Default project", is_default=True
+        org_id=org.id, name="General", description="Default project",
+        is_default=True, key="GEN",
     )
     db.add(default_project)
     await db.flush()

@@ -15,6 +15,7 @@ export interface Project {
   org_id: string;
   name: string;
   description: string | null;
+  key: string | null;
   created_at: string;
   my_role: string | null;
 }
@@ -26,6 +27,7 @@ export type TaskPriority = "low" | "medium" | "high" | "urgent";
 export interface Task {
   id: string;
   project_id: string;
+  seq: number | null;
   title: string;
   description: string | null;
   status: TaskStatus;
@@ -46,6 +48,14 @@ export interface Comment {
   author_id: string;
   author_username: string;
   body: string;
+  created_at: string;
+}
+
+export interface Activity {
+  id: string;
+  actor_username: string;
+  action: string;
+  detail: string | null;
   created_at: string;
 }
 
@@ -169,6 +179,13 @@ export function useComments(taskId: string) {
   });
 }
 
+export function useActivity(taskId: string) {
+  return useQuery({
+    queryKey: ["activity", taskId],
+    queryFn: () => authedFetch<Activity[]>(`/tasks/${taskId}/activity`),
+  });
+}
+
 export function useAddComment(taskId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -177,7 +194,10 @@ export function useAddComment(taskId: string) {
         method: "POST",
         body: JSON.stringify({ body }),
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["comments", taskId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["comments", taskId] });
+      qc.invalidateQueries({ queryKey: ["activity", taskId] });
+    },
   });
 }
 
@@ -210,6 +230,7 @@ export function useCreateTask(projectId: string) {
       const optimistic: Task = {
         id: `temp-${Date.now()}`,
         project_id: projectId,
+        seq: null,
         title: body.title,
         description: null,
         status: body.status ?? "todo",
@@ -253,7 +274,10 @@ export function useUpdateTask(projectId: string) {
     onError: (_e, _v, ctx) => {
       if (ctx?.prev) qc.setQueryData(["tasks", projectId], ctx.prev);
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ["tasks", projectId] }),
+    onSettled: (_d, _e, vars) => {
+      qc.invalidateQueries({ queryKey: ["tasks", projectId] });
+      qc.invalidateQueries({ queryKey: ["activity", vars.id] });
+    },
   });
 }
 

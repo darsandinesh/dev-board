@@ -19,6 +19,7 @@ class ProjectOut(BaseModel):
     org_id: uuid.UUID
     name: str
     description: str | None
+    key: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

@@ -6,8 +6,10 @@ import { useEffect, useState } from "react";
 import { Avatar } from "@/components/Avatar";
 import { PRIORITIES, STATUSES, TYPES } from "@/components/issueMeta";
 import {
+  useActivity,
   useAddComment,
   useComments,
+  useProject,
   useProjectMembers,
   useTasks,
   useUpdateTask,
@@ -57,8 +59,10 @@ function IssueDetail({
   onClose: () => void;
 }) {
   const { data: tasks } = useTasks(projectId);
+  const { data: project } = useProject(projectId);
   const { data: members } = useProjectMembers(projectId);
   const { data: comments } = useComments(taskId);
+  const { data: activity } = useActivity(taskId);
   const update = useUpdateTask(projectId);
   const addComment = useAddComment(taskId);
 
@@ -92,7 +96,9 @@ function IssueDetail({
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b px-6 py-3">
-        <span className="text-xs font-medium uppercase tracking-wide text-slate-400">Issue</span>
+        <span className="font-mono text-sm font-semibold text-slate-500">
+          {project?.key && task.seq != null ? `${project.key}-${task.seq}` : "Issue"}
+        </span>
         <button onClick={onClose} className="rounded p-1 text-slate-400 hover:bg-slate-100">
           <X className="h-5 w-5" />
         </button>
@@ -213,6 +219,31 @@ function IssueDetail({
             </button>
           </form>
         </div>
+
+        {/* Activity */}
+        {activity && activity.length > 0 && (
+          <div>
+            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+              Activity
+            </div>
+            <ul className="space-y-1.5 border-l-2 border-slate-100 pl-3">
+              {activity.map((a) => (
+                <li key={a.id} className="text-xs text-slate-500">
+                  <span className="font-medium text-slate-700">{a.actor_username}</span>{" "}
+                  {a.action === "created" && "created this issue"}
+                  {a.action === "commented" && "commented"}
+                  {a.action === "status" && `changed status ${a.detail ?? ""}`}
+                  {a.action === "priority" && `changed priority ${a.detail ?? ""}`}
+                  {a.action === "type" && `changed type ${a.detail ?? ""}`}
+                  {a.action === "assignee" && `${a.detail ?? "changed assignee"}`}
+                  <span className="ml-1 text-slate-300">
+                    · {new Date(a.created_at).toLocaleString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

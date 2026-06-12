@@ -14,16 +14,17 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import DBUser
 from app.core.authz import authz, require
 from app.db.session import get_db
 from app.models.project import Project
-from app.models.task import Task, TaskComment
+from app.models.task import Task, TaskActivity, TaskComment
 from app.models.user import User
 from app.schemas.task import (
+    ActivityOut,
     CommentCreate,
     CommentOut,
     TaskCreate,
@@ -43,6 +44,10 @@ async def _sub_for(db: AsyncSession, user_id: uuid.UUID | None) -> str | None:
     return u.keycloak_sub if u else None
 
 
+async def _log(db: AsyncSession, task_id, actor_id, action: str, detail: str | None = None):
+    db.add(TaskActivity(task_id=task_id, actor_id=actor_id, action=action, detail=detail))
+
+
 @router.post("", response_model=TaskOut, status_code=status.HTTP_201_CREATED)
 async def create_task(body: TaskCreate, user: DBUser, db: Db):
     """Create a task in a project. (Auth: editor — Developer or above.)"""
@@ -51,8 +56,17 @@ async def create_task(body: TaskCreate, user: DBUser, db: Db):
     if not await authz.check(f"user:{user.keycloak_sub}", "editor", f"project:{body.project_id}"):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
 
+    next_seq = (
+        await db.execute(
+            select(func.coalesce(func.max(Task.seq), 0)).where(
+                Task.project_id == body.project_id
+            )
+        )
+    ).scalar() + 1
+
     task = Task(
         project_id=body.project_id,
+        seq=next_seq,
         title=body.title,
         description=body.description,
         status=body.status,
@@ -66,6 +80,7 @@ async def create_task(body: TaskCreate, user: DBUser, db: Db):
     )
     db.add(task)
     await db.flush()
+    await _log(db, task.id, user.id, "created", task.title)
     await authz.write(f"project:{body.project_id}", "project", f"task:{task.id}")
     assignee_sub = await _sub_for(db, body.assignee_id)
     if assignee_sub:
@@ -113,10 +128,21 @@ async def update_task(task_id: uuid.UUID, body: TaskUpdate, user: DBUser, db: Db
 
     patch = body.model_dump(exclude_unset=True)
     old_assignee_id = task.assignee_id
+    # Capture old values for activity logging (status/priority/type changes).
+    olds = {f: getattr(task, f) for f in ("status", "priority", "type")}
     for field, value in patch.items():
         setattr(task, field, value)
     await db.flush()
     await db.refresh(task)  # `updated_at` ON UPDATE default
+
+    for field in ("status", "priority", "type"):
+        if field in patch and patch[field] != olds[field]:
+            ov = olds[field].value if hasattr(olds[field], "value") else olds[field]
+            nv = patch[field].value if hasattr(patch[field], "value") else patch[field]
+            await _log(db, task.id, user.id, field, f"{ov} → {nv}")
+    if "assignee_id" in patch and patch["assignee_id"] != old_assignee_id:
+        await _log(db, task.id, user.id, "assignee",
+                   "unassigned" if patch["assignee_id"] is None else "reassigned")
 
     # Keep the assignee tuple in sync if assignee changed.
     if "assignee_id" in patch and patch["assignee_id"] != old_assignee_id:
@@ -182,9 +208,31 @@ async def add_comment(task_id: uuid.UUID, body: CommentCreate, user: DBUser, db:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Task not found")
     comment = TaskComment(task_id=task_id, author_id=user.id, body=body.body)
     db.add(comment)
+    await _log(db, task_id, user.id, "commented")
     await db.flush()
     await db.refresh(comment)
     return CommentOut(
         id=comment.id, task_id=task_id, author_id=user.id,
         author_username=user.username, body=comment.body, created_at=comment.created_at,
     )
+
+
+@router.get(
+    "/{task_id}/activity",
+    response_model=list[ActivityOut],
+    dependencies=[Depends(require("can_view", "task", "task_id"))],
+)
+async def list_activity(task_id: uuid.UUID, user: DBUser, db: Db):
+    rows = await db.execute(
+        select(TaskActivity, User.username)
+        .join(User, User.id == TaskActivity.actor_id)
+        .where(TaskActivity.task_id == task_id)
+        .order_by(TaskActivity.created_at.desc())
+    )
+    return [
+        ActivityOut(
+            id=a.id, actor_username=username, action=a.action,
+            detail=a.detail, created_at=a.created_at,
+        )
+        for a, username in rows.all()
+    ]

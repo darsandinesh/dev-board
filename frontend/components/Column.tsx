@@ -19,6 +19,7 @@ export function Column({
   canEdit,
   onDropTask,
   assignees = {},
+  projectKey,
 }: {
   status: TaskStatus;
   title: string;
@@ -26,6 +27,7 @@ export function Column({
   canEdit: boolean;
   onDropTask: (taskId: string, status: TaskStatus) => void;
   assignees?: Record<string, string>;
+  projectKey?: string | null;
 }) {
   const draggingId = useDragStore((s) => s.draggingId);
   const [over, setOver] = useState(false);
@@ -61,6 +63,7 @@ export function Column({
             task={t}
             draggable={canEdit}
             assignee={t.assignee_id ? assignees[t.assignee_id] : undefined}
+            projectKey={projectKey}
           />
         ))}
       </div>

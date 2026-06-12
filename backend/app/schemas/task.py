@@ -40,6 +40,7 @@ class TaskUpdate(BaseModel):
 class TaskOut(BaseModel):
     id: uuid.UUID
     project_id: uuid.UUID
+    seq: int | None
     title: str
     description: str | None
     status: TaskStatus
@@ -66,4 +67,12 @@ class CommentOut(BaseModel):
     author_id: uuid.UUID
     author_username: str
     body: str
+    created_at: datetime
+
+
+class ActivityOut(BaseModel):
+    id: uuid.UUID
+    actor_username: str
+    action: str
+    detail: str | None
     created_at: datetime

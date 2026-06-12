@@ -36,6 +36,7 @@ class Task(Base):
     project_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("projects.id", ondelete="CASCADE"), index=True
     )
+    seq: Mapped[int | None]  # per-project issue number (key display: PROJ-<seq>)
     title: Mapped[str]
     description: Mapped[str | None]
     status: Mapped[TaskStatus] = mapped_column(default=TaskStatus.todo)
@@ -67,4 +68,19 @@ class TaskComment(Base):
     )
     author_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     body: Mapped[str]
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+
+class TaskActivity(Base):
+    """Append-only audit of changes to an issue (created, status, assignee, …)."""
+
+    __tablename__ = "task_activity"
+
+    id: Mapped[uuid.UUID] = pk()
+    task_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("tasks.id", ondelete="CASCADE"), index=True
+    )
+    actor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    action: Mapped[str]            # created | status | assignee | priority | type | edited
+    detail: Mapped[str | None]     # human-readable, e.g. "todo → done"
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

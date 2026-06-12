@@ -11,10 +11,12 @@ export function TaskCard({
   task,
   draggable,
   assignee,
+  projectKey,
 }: {
   task: Task;
   draggable: boolean;
   assignee?: string;
+  projectKey?: string | null;
 }) {
   const setDragging = useDragStore((s) => s.setDragging);
   const openTask = useDragStore((s) => s.openTask);
@@ -51,6 +53,11 @@ export function TaskCard({
       <div className="mt-2 flex items-center gap-2 text-xs text-slate-400">
         <Type.icon className={`h-4 w-4 ${Type.color}`} />
         <Prio.icon className={`h-4 w-4 ${Prio.color}`} />
+        {projectKey && task.seq != null && (
+          <span className="font-mono font-medium text-slate-400">
+            {projectKey}-{task.seq}
+          </span>
+        )}
         {task.story_points != null && (
           <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1 font-medium text-slate-500">
             {task.story_points}

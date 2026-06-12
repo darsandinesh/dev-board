@@ -74,6 +74,30 @@ async def test_comments_require_view_access(client, seed):
     ).status_code == 403
 
 
+async def test_issue_keys_and_seq(client, seed):
+    org = await seed.org(admin="alice")
+    proj = await seed.project(org, owner="alice")
+    # project has a key prefix
+    p = (await client.get(f"/projects/{proj}", headers=bearer("alice"))).json()
+    assert p["key"]  # e.g. "WEB"
+    # tasks get incrementing per-project seq
+    t1 = await client.post("/tasks", headers=bearer("alice"), json={"project_id": proj, "title": "one"})
+    t2 = await client.post("/tasks", headers=bearer("alice"), json={"project_id": proj, "title": "two"})
+    assert t1.json()["seq"] == 1
+    assert t2.json()["seq"] == 2
+
+
+async def test_activity_logged(client, seed):
+    org = await seed.org(admin="alice")
+    proj = await seed.project(org, owner="alice")
+    tid = await seed.task(proj, editor="alice")
+    await client.patch(f"/tasks/{tid}", headers=bearer("alice"), json={"status": "done"})
+    acts = (await client.get(f"/tasks/{tid}/activity", headers=bearer("alice"))).json()
+    actions = {a["action"] for a in acts}
+    assert "created" in actions
+    assert "status" in actions
+
+
 async def test_assignee_can_comment(client, seed):
     org = await seed.org(admin="alice")
     proj = await seed.project(org, owner="alice")

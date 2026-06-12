@@ -3,7 +3,14 @@
 from app.db.base import Base
 from app.models.org import Org, OrgMember, OrgRole
 from app.models.project import Project, ProjectMember, ProjectRole
-from app.models.task import Task, TaskComment, TaskPriority, TaskStatus, TaskType
+from app.models.task import (
+    Task,
+    TaskActivity,
+    TaskComment,
+    TaskPriority,
+    TaskStatus,
+    TaskType,
+)
 from app.models.user import User
 
 __all__ = [
@@ -17,6 +24,7 @@ __all__ = [
     "ProjectRole",
     "Task",
     "TaskComment",
+    "TaskActivity",
     "TaskStatus",
     "TaskType",
     "TaskPriority",

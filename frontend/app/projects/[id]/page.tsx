@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Eye, Plus, Settings } from "lucide-react";
+import { ArrowLeft, Eye, Plus, Search, Settings } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -30,9 +30,22 @@ export default function ProjectBoardPage() {
   const { data: members } = useProjectMembers(id);
   const [title, setTitle] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
+  const [query, setQuery] = useState("");
+  const [typeF, setTypeF] = useState("");
+  const [prioF, setPrioF] = useState("");
+  const [assigneeF, setAssigneeF] = useState("");
 
   const assignees: Record<string, string> = Object.fromEntries(
     (members ?? []).map((m) => [m.user_id, m.username]),
+  );
+
+  const filtered = (tasks ?? []).filter(
+    (t) =>
+      (!query || t.title.toLowerCase().includes(query.toLowerCase())) &&
+      (!typeF || t.type === typeF) &&
+      (!prioF || t.priority === prioF) &&
+      (!assigneeF ||
+        (assigneeF === "none" ? !t.assignee_id : t.assignee_id === assigneeF)),
   );
 
   const move = (taskId: string, status: TaskStatus) =>
@@ -121,14 +134,56 @@ export default function ProjectBoardPage() {
         </form>
       </Protected>
 
+      {/* Filter bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search issues…"
+            className="rounded-lg border bg-white py-1.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-500"
+          />
+        </div>
+        <select value={typeF} onChange={(e) => setTypeF(e.target.value)} className="rounded-lg border bg-white px-2.5 py-1.5 text-sm text-slate-600">
+          <option value="">All types</option>
+          <option value="task">Task</option>
+          <option value="story">Story</option>
+          <option value="bug">Bug</option>
+        </select>
+        <select value={prioF} onChange={(e) => setPrioF(e.target.value)} className="rounded-lg border bg-white px-2.5 py-1.5 text-sm text-slate-600">
+          <option value="">All priorities</option>
+          <option value="urgent">Urgent</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <select value={assigneeF} onChange={(e) => setAssigneeF(e.target.value)} className="rounded-lg border bg-white px-2.5 py-1.5 text-sm text-slate-600">
+          <option value="">All assignees</option>
+          <option value="none">Unassigned</option>
+          {(members ?? []).map((m) => (
+            <option key={m.user_id} value={m.user_id}>{m.username}</option>
+          ))}
+        </select>
+        {(query || typeF || prioF || assigneeF) && (
+          <button
+            onClick={() => { setQuery(""); setTypeF(""); setPrioF(""); setAssigneeF(""); }}
+            className="text-xs text-slate-500 hover:text-slate-800"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
       {isLoading ? (
         <LoaderScreen message="Loading tasks" />
       ) : (
         <Board
-          tasks={tasks ?? []}
+          tasks={filtered}
           canEdit={!!perms?.can_edit}
           onMove={move}
           assignees={assignees}
+          projectKey={project?.key}
         />
       )}
 

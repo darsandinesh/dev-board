@@ -2,14 +2,16 @@
 
 import { Building2, LogOut, UserCircle } from "lucide-react";
 import Link from "next/link";
-import { signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 
 import { useMe, useOrgs } from "@/lib/api";
+import { federatedSignOut } from "@/lib/logout";
 import { roleLabel } from "@/lib/roles";
 
 export default function SettingsPage() {
   const { data: me } = useMe();
   const { data: orgs } = useOrgs();
+  const { data: session } = useSession();
 
   return (
     <div className="space-y-6">
@@ -79,7 +81,7 @@ export default function SettingsPage() {
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
         <h2 className="font-semibold text-slate-900">Session</h2>
         <button
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={() => federatedSignOut(session?.idToken)}
           className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
         >
           <LogOut className="h-4 w-4" /> Sign out

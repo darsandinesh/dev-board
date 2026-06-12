@@ -11,11 +11,12 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { useMe } from "@/lib/api";
+import { federatedSignOut } from "@/lib/logout";
 import { useUiStore } from "@/lib/store";
 
 type NavItem = {
@@ -39,6 +40,7 @@ export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const toggle = useUiStore((s) => s.toggleSidebar);
   const { data: me } = useMe();
+  const { data: session } = useSession();
   const nav = NAV.filter((n) => !n.platformAdmin || me?.is_platform_admin);
 
   return (
@@ -98,7 +100,7 @@ export function Sidebar() {
       {/* footer: sign out */}
       <div className="border-t border-slate-800 p-3">
         <button
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={() => federatedSignOut(session?.idToken)}
           title={collapsed ? "Sign out" : undefined}
           className={`flex w-full items-center gap-3 rounded-lg py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white ${
             collapsed ? "justify-center px-0" : "px-3"

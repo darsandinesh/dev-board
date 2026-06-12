@@ -212,6 +212,33 @@ export function useComments(taskId: string) {
   });
 }
 
+// ---- reports ----------------------------------------------------------------
+export interface Report {
+  total: number;
+  done: number;
+  by_status: Record<string, number>;
+  by_type: Record<string, number>;
+  by_priority: Record<string, number>;
+  by_assignee: Record<string, number>;
+  points_total: number;
+  points_done: number;
+  active_sprints: {
+    id: string;
+    name: string;
+    total: number;
+    done: number;
+    points: number;
+    points_done: number;
+  }[];
+}
+
+export function useReport(projectId: string) {
+  return useQuery({
+    queryKey: ["report", projectId],
+    queryFn: () => authedFetch<Report>(`/projects/${projectId}/report`),
+  });
+}
+
 // ---- sprints ----------------------------------------------------------------
 export function useSprints(projectId: string) {
   return useQuery({

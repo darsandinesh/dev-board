@@ -7,6 +7,7 @@ import { useState } from "react";
 
 import { Backlog } from "@/components/Backlog";
 import { Board } from "@/components/Board";
+import { Reports } from "@/components/Reports";
 import { ErrorState } from "@/components/ErrorState";
 import { IssueModal } from "@/components/IssueModal";
 import { LoaderScreen } from "@/components/Loader";
@@ -35,7 +36,7 @@ export default function ProjectBoardPage() {
   const [typeF, setTypeF] = useState("");
   const [prioF, setPrioF] = useState("");
   const [assigneeF, setAssigneeF] = useState("");
-  const [view, setView] = useState<"board" | "backlog">("board");
+  const [view, setView] = useState<"board" | "backlog" | "reports">("board");
 
   const assignees: Record<string, string> = Object.fromEntries(
     (members ?? []).map((m) => [m.user_id, m.username]),
@@ -102,7 +103,7 @@ export default function ProjectBoardPage() {
 
       {/* View tabs */}
       <div className="flex gap-1 border-b">
-        {(["board", "backlog"] as const).map((v) => (
+        {(["board", "backlog", "reports"] as const).map((v) => (
           <button
             key={v}
             onClick={() => setView(v)}
@@ -118,6 +119,8 @@ export default function ProjectBoardPage() {
       </div>
 
       {view === "backlog" && <Backlog projectId={id} canEdit={!!perms?.can_edit} />}
+
+      {view === "reports" && <Reports projectId={id} />}
 
       {view === "board" && (
         <>

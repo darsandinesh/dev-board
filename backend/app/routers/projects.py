@@ -10,6 +10,8 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from collections import Counter
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,6 +20,8 @@ from app.core.authz import authz, require
 from app.db.session import get_db
 from app.models.org import Org, OrgMember, OrgRole
 from app.models.project import Project, ProjectMember, ProjectRole
+from app.models.sprint import Sprint, SprintState
+from app.models.task import Task, TaskStatus
 from app.models.user import User
 from app.schemas.common import MemberOut
 from app.schemas.project import (
@@ -200,3 +204,64 @@ async def remove_project_member(
     await db.delete(member)
     await db.flush()
     await authz.delete(f"user:{target.keycloak_sub}", role.value, f"project:{project_id}")
+
+
+# ---------------------------------------------------------------------------
+# Reports — project insights (status/type/priority breakdowns, points, sprints)
+# ---------------------------------------------------------------------------
+@router.get(
+    "/{project_id}/report",
+    dependencies=[Depends(require("viewer", "project", "project_id"))],
+)
+async def project_report(project_id: uuid.UUID, user: DBUser, db: Db):
+    tasks = list(
+        (await db.execute(select(Task).where(Task.project_id == project_id))).scalars().all()
+    )
+    # username map for assignee workload
+    names = {
+        u.id: u.username
+        for u in (await db.execute(select(User))).scalars().all()
+    }
+
+    by_status = Counter(t.status.value for t in tasks)
+    by_type = Counter(t.type.value for t in tasks)
+    by_priority = Counter(t.priority.value for t in tasks)
+    by_assignee = Counter(
+        names.get(t.assignee_id, "Unassigned") if t.assignee_id else "Unassigned"
+        for t in tasks
+    )
+    points_total = sum(t.story_points or 0 for t in tasks)
+    points_done = sum(t.story_points or 0 for t in tasks if t.status == TaskStatus.done)
+
+    sprints = (
+        await db.execute(
+            select(Sprint).where(
+                Sprint.project_id == project_id, Sprint.state == SprintState.active
+            )
+        )
+    ).scalars().all()
+    active_sprints = []
+    for s in sprints:
+        s_tasks = [t for t in tasks if t.sprint_id == s.id]
+        active_sprints.append({
+            "id": str(s.id),
+            "name": s.name,
+            "total": len(s_tasks),
+            "done": sum(1 for t in s_tasks if t.status == TaskStatus.done),
+            "points": sum(t.story_points or 0 for t in s_tasks),
+            "points_done": sum(
+                t.story_points or 0 for t in s_tasks if t.status == TaskStatus.done
+            ),
+        })
+
+    return {
+        "total": len(tasks),
+        "done": by_status.get("done", 0),
+        "by_status": dict(by_status),
+        "by_type": dict(by_type),
+        "by_priority": dict(by_priority),
+        "by_assignee": dict(by_assignee),
+        "points_total": points_total,
+        "points_done": points_done,
+        "active_sprints": active_sprints,
+    }

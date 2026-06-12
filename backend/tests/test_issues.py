@@ -129,6 +129,33 @@ async def test_issue_links(client, seed):
     assert bad.status_code == 400
 
 
+async def test_assignment_notifies(client, seed):
+    org = await seed.org(admin="alice")
+    proj = await seed.project(org, owner="alice")
+    await seed.add_project_member(proj, owner="alice", user="bob", role="editor")
+    bob_id = await seed.provision("bob")
+    await client.post("/tasks", headers=bearer("alice"),
+                      json={"project_id": proj, "title": "For bob", "assignee_id": bob_id})
+    notes = (await client.get("/notifications", headers=bearer("bob"))).json()
+    assert any(n["kind"] == "assigned" and not n["is_read"] for n in notes)
+
+
+async def test_mention_notifies(client, seed):
+    org = await seed.org(admin="alice")
+    proj = await seed.project(org, owner="alice")
+    await seed.add_project_member(proj, owner="alice", user="bob", role="editor")
+    await seed.provision("bob")
+    tid = await seed.task(proj, editor="alice")
+    await client.post(f"/tasks/{tid}/comments", headers=bearer("alice"),
+                      json={"body": "hey @bob please look"})
+    notes = (await client.get("/notifications", headers=bearer("bob"))).json()
+    assert any(n["kind"] == "mentioned" for n in notes)
+    # mark all read
+    assert (await client.post("/notifications/read-all", headers=bearer("bob"))).status_code == 204
+    after = (await client.get("/notifications", headers=bearer("bob"))).json()
+    assert all(n["is_read"] for n in after)
+
+
 async def test_assignee_can_comment(client, seed):
     org = await seed.org(admin="alice")
     proj = await seed.project(org, owner="alice")

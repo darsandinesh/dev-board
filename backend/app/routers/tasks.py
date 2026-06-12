@@ -20,6 +20,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import DBUser
 from app.core.authz import authz, require
 from app.db.session import get_db
+import re
+
+from app.models.notification import Notification
 from app.models.project import Project
 from app.models.task import Task, TaskActivity, TaskComment, TaskLink
 from app.models.user import User
@@ -49,6 +52,23 @@ async def _sub_for(db: AsyncSession, user_id: uuid.UUID | None) -> str | None:
 
 async def _log(db: AsyncSession, task_id, actor_id, action: str, detail: str | None = None):
     db.add(TaskActivity(task_id=task_id, actor_id=actor_id, action=action, detail=detail))
+
+
+def _notify(db: AsyncSession, user_id, actor_id, task_id, kind: str, message: str):
+    if user_id and user_id != actor_id:  # never notify yourself
+        db.add(Notification(
+            user_id=user_id, actor_id=actor_id, task_id=task_id, kind=kind, message=message,
+        ))
+
+
+async def _notify_mentions(db: AsyncSession, body: str, actor, task_id, task_title: str):
+    usernames = set(re.findall(r"@([A-Za-z0-9_.\-]+)", body))
+    if not usernames:
+        return
+    rows = await db.execute(select(User).where(User.username.in_(usernames)))
+    for u in rows.scalars().all():
+        _notify(db, u.id, actor.id, task_id, "mentioned",
+                f"{actor.username} mentioned you in {task_title}")
 
 
 @router.post("", response_model=TaskOut, status_code=status.HTTP_201_CREATED)
@@ -90,6 +110,9 @@ async def create_task(body: TaskCreate, user: DBUser, db: Db):
     assignee_sub = await _sub_for(db, body.assignee_id)
     if assignee_sub:
         await authz.write(f"user:{assignee_sub}", "assignee", f"task:{task.id}")
+    if body.assignee_id:
+        _notify(db, body.assignee_id, user.id, task.id, "assigned",
+                f"{user.username} assigned you {task.title}")
     return task
 
 
@@ -157,6 +180,9 @@ async def update_task(task_id: uuid.UUID, body: TaskUpdate, user: DBUser, db: Db
         new_sub = await _sub_for(db, patch["assignee_id"])
         if new_sub:
             await authz.write(f"user:{new_sub}", "assignee", f"task:{task_id}")
+        if patch["assignee_id"]:
+            _notify(db, patch["assignee_id"], user.id, task_id, "assigned",
+                    f"{user.username} assigned you {task.title}")
     return task
 
 
@@ -211,9 +237,15 @@ async def list_comments(task_id: uuid.UUID, user: DBUser, db: Db):
 async def add_comment(task_id: uuid.UUID, body: CommentCreate, user: DBUser, db: Db):
     if await db.get(Task, task_id) is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Task not found")
+    task = await db.get(Task, task_id)
     comment = TaskComment(task_id=task_id, author_id=user.id, body=body.body)
     db.add(comment)
     await _log(db, task_id, user.id, "commented")
+    # notify @mentions, plus the assignee (if any, and not the commenter)
+    await _notify_mentions(db, body.body, user, task_id, task.title if task else "an issue")
+    if task and task.assignee_id:
+        _notify(db, task.assignee_id, user.id, task_id, "commented",
+                f"{user.username} commented on {task.title}")
     await db.flush()
     await db.refresh(comment)
     return CommentOut(

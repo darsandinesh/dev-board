@@ -212,6 +212,42 @@ export function useComments(taskId: string) {
   });
 }
 
+// ---- notifications ----------------------------------------------------------
+export interface Notification {
+  id: string;
+  kind: string;
+  message: string;
+  task_id: string | null;
+  actor_username: string | null;
+  is_read: boolean;
+  created_at: string;
+}
+
+export function useNotifications() {
+  return useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => authedFetch<Notification[]>("/notifications"),
+    refetchInterval: 20_000, // light polling
+  });
+}
+
+export function useMarkAllRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => authedFetch<null>("/notifications/read-all", { method: "POST" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  });
+}
+
+export function useMarkRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      authedFetch<null>(`/notifications/${id}/read`, { method: "POST" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  });
+}
+
 // ---- reports ----------------------------------------------------------------
 export interface Report {
   total: number;

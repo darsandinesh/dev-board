@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 
 import { Avatar } from "./Avatar";
 import { Loader } from "./Loader";
+import { NotificationBell } from "./NotificationBell";
 import { Sidebar } from "./Sidebar";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -46,7 +47,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex h-screen overflow-hidden bg-slate-50">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 shrink-0 items-center justify-end gap-2 border-b bg-white px-6">
+        <header className="flex h-14 shrink-0 items-center justify-end gap-3 border-b bg-white px-6">
+          <NotificationBell />
           <Avatar name={name} size={28} />
           <span className="text-sm font-medium text-slate-700">{name}</span>
         </header>

@@ -1,6 +1,7 @@
 """Import all models here so `Base.metadata` is fully populated for Alembic."""
 
 from app.db.base import Base
+from app.models.notification import Notification
 from app.models.org import Org, OrgMember, OrgRole
 from app.models.project import Project, ProjectMember, ProjectRole
 from app.models.sprint import Sprint, SprintState
@@ -19,6 +20,7 @@ from app.models.user import User
 __all__ = [
     "Base",
     "User",
+    "Notification",
     "Org",
     "OrgMember",
     "OrgRole",

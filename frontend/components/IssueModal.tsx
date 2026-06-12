@@ -1,12 +1,13 @@
 "use client";
 
-import { Download, Paperclip, Send, Trash2, X } from "lucide-react";
+import { Paperclip, Send, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { AttachmentItem } from "@/components/AttachmentItem";
 import { Avatar } from "@/components/Avatar";
+import { Loader } from "@/components/Loader";
 import { LINK_LABELS, PRIORITIES, STATUSES, TYPES } from "@/components/issueMeta";
 import {
-  downloadAttachment,
   useActivity,
   useAddComment,
   useAddLink,
@@ -68,7 +69,7 @@ function IssueDetail({
   canEdit: boolean;
   onClose: () => void;
 }) {
-  const { data: tasks } = useTasks(projectId);
+  const { data: tasks, isLoading: tasksLoading } = useTasks(projectId);
   const { data: project } = useProject(projectId);
   const { data: members } = useProjectMembers(projectId);
   const { data: sprints } = useSprints(projectId);
@@ -93,6 +94,7 @@ function IssueDetail({
   const [comment, setComment] = useState("");
   const [linkTarget, setLinkTarget] = useState("");
   const [linkType, setLinkType] = useState<LinkType>("relates_to");
+  const [preview, setPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (task) {
@@ -104,8 +106,17 @@ function IssueDetail({
 
   if (!task) {
     return (
-      <div className="p-6 text-slate-500">
-        Task not found. <button onClick={onClose} className="text-indigo-600">Close</button>
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-end border-b px-6 py-3">
+          <button onClick={onClose} className="rounded p-1 text-slate-400 hover:bg-slate-100">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="flex flex-1 items-center justify-center">
+          {tasksLoading ? <Loader size={36} /> : (
+            <span className="text-sm text-slate-400">Issue not found.</span>
+          )}
+        </div>
       </div>
     );
   }
@@ -337,27 +348,14 @@ function IssueDetail({
           </div>
           <ul className="space-y-1">
             {attachments?.map((a) => (
-              <li key={a.id} className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
-                <Paperclip className="h-4 w-4 shrink-0 text-slate-400" />
-                <span className="flex-1 truncate text-slate-700">{a.filename}</span>
-                <span className="text-xs text-slate-400">{Math.ceil(a.size / 1024)} KB</span>
-                <button
-                  onClick={() => downloadAttachment(taskId, a)}
-                  className="text-slate-400 hover:text-indigo-600"
-                  title="Download"
-                >
-                  <Download className="h-4 w-4" />
-                </button>
-                {!ro && (
-                  <button
-                    onClick={() => deleteAttachment.mutate(a.id)}
-                    className="text-slate-300 hover:text-red-500"
-                    title="Delete"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                )}
-              </li>
+              <AttachmentItem
+                key={a.id}
+                taskId={taskId}
+                att={a}
+                canDelete={!ro}
+                onDelete={() => deleteAttachment.mutate(a.id)}
+                onPreview={setPreview}
+              />
             ))}
             {attachments?.length === 0 && (
               <li className="text-sm text-slate-400">No attachments.</li>
@@ -436,6 +434,17 @@ function IssueDetail({
           </div>
         )}
       </div>
+
+      {/* Image lightbox */}
+      {preview && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-8"
+          onClick={() => setPreview(null)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt="attachment" className="max-h-full max-w-full rounded-lg" />
+        </div>
+      )}
     </div>
   );
 }

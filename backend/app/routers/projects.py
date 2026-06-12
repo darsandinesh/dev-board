@@ -30,6 +30,7 @@ from app.schemas.project import (
     ProjectMemberCreate,
     ProjectMemberRoleUpdate,
     ProjectOut,
+    ProjectUpdate,
 )
 
 import re
@@ -120,6 +121,21 @@ async def get_project(project_id: uuid.UUID, user: DBUser, db: Db):
     project = await db.get(Project, project_id)
     if project is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Project not found")
+    return project
+
+
+@router.patch(
+    "/{project_id}",
+    response_model=ProjectOut,
+    dependencies=[Depends(require("owner", "project", "project_id"))],
+)
+async def update_project(project_id: uuid.UUID, body: ProjectUpdate, user: DBUser, db: Db):
+    project = await db.get(Project, project_id)
+    if project is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Project not found")
+    for field, value in body.model_dump(exclude_unset=True).items():
+        setattr(project, field, value)
+    await db.flush()
     return project
 
 

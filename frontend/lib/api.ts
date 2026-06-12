@@ -198,6 +198,21 @@ export function useProject(id: string) {
   });
 }
 
+export function useUpdateProject(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (patch: { name?: string; description?: string | null }) =>
+      authedFetch<Project>(`/projects/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(patch),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["project", id] });
+      qc.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+}
+
 export function useTasks(projectId: string) {
   return useQuery({
     queryKey: ["tasks", projectId],
@@ -257,6 +272,15 @@ export function useDeleteAttachment(taskId: string) {
   });
 }
 
+/** Fetch an attachment (authed) and return an object URL — for inline preview. */
+export async function attachmentBlobUrl(taskId: string, attId: string): Promise<string> {
+  const session = await getSession();
+  const res = await fetch(`${API}/tasks/${taskId}/attachments/${attId}/download`, {
+    headers: { Authorization: `Bearer ${session?.accessToken ?? ""}` },
+  });
+  return URL.createObjectURL(await res.blob());
+}
+
 /** Download an attachment with the bearer token, then save via a blob URL. */
 export async function downloadAttachment(taskId: string, att: Attachment) {
   const session = await getSession();
@@ -278,6 +302,7 @@ export interface Notification {
   kind: string;
   message: string;
   task_id: string | null;
+  project_id: string | null;
   actor_username: string | null;
   is_read: boolean;
   created_at: string;

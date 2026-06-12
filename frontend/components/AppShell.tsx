@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { Avatar } from "./Avatar";
 import { Loader } from "./Loader";
 import { NotificationBell } from "./NotificationBell";
+import { ProjectSwitcher } from "./ProjectSwitcher";
 import { Sidebar } from "./Sidebar";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -47,10 +48,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex h-screen overflow-hidden bg-slate-50">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 shrink-0 items-center justify-end gap-3 border-b bg-white px-6">
-          <NotificationBell />
-          <Avatar name={name} size={28} />
-          <span className="text-sm font-medium text-slate-700">{name}</span>
+        <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-white px-6">
+          <ProjectSwitcher />
+          <div className="flex flex-1 items-center justify-end gap-3">
+            <NotificationBell />
+            <Avatar name={name} size={28} />
+            <span className="text-sm font-medium text-slate-700">{name}</span>
+          </div>
         </header>
         <main className="flex-1 overflow-auto p-6">
           <div className="mx-auto max-w-6xl animate-fade-in">{children}</div>

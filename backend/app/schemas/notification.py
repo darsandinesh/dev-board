@@ -11,6 +11,7 @@ class NotificationOut(BaseModel):
     kind: str
     message: str
     task_id: uuid.UUID | None
+    project_id: uuid.UUID | None
     actor_username: str | None
     is_read: bool
     created_at: datetime

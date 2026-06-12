@@ -472,10 +472,22 @@ export function useProjectMembers(projectId: string) {
   });
 }
 
+export interface CreateTaskInput {
+  title: string;
+  status?: TaskStatus;
+  type?: TaskType;
+  priority?: TaskPriority;
+  description?: string | null;
+  assignee_id?: string | null;
+  sprint_id?: string | null;
+  story_points?: number | null;
+  labels?: string[];
+}
+
 export function useCreateTask(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { title: string; status?: TaskStatus; assignee_id?: string | null }) =>
+    mutationFn: (body: CreateTaskInput) =>
       authedFetch<Task>("/tasks", {
         method: "POST",
         body: JSON.stringify({ project_id: projectId, ...body }),
@@ -488,15 +500,15 @@ export function useCreateTask(projectId: string) {
         id: `temp-${Date.now()}`,
         project_id: projectId,
         parent_id: null,
-        sprint_id: null,
+        sprint_id: body.sprint_id ?? null,
         seq: null,
         title: body.title,
-        description: null,
+        description: body.description ?? null,
         status: body.status ?? "todo",
-        type: "task",
-        priority: "medium",
-        labels: [],
-        story_points: null,
+        type: body.type ?? "task",
+        priority: body.priority ?? "medium",
+        labels: body.labels ?? [],
+        story_points: body.story_points ?? null,
         due_date: null,
         assignee_id: body.assignee_id ?? null,
         position: 999,

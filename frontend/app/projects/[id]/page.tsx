@@ -7,12 +7,12 @@ import { useState } from "react";
 
 import { Backlog } from "@/components/Backlog";
 import { Board } from "@/components/Board";
+import { CreateIssueModal } from "@/components/CreateIssueModal";
 import { Reports } from "@/components/Reports";
 import { ErrorState } from "@/components/ErrorState";
 import { LoaderScreen } from "@/components/Loader";
 import { Protected } from "@/components/Protected";
 import {
-  useCreateTask,
   usePermissions,
   useProject,
   useProjectMembers,
@@ -27,10 +27,8 @@ export default function ProjectBoardPage() {
   const { data: tasks, isLoading } = useTasks(id);
   const { data: perms } = usePermissions(`project:${id}`);
   const updateTask = useUpdateTask(id);
-  const createTask = useCreateTask(id);
   const { data: members } = useProjectMembers(id);
-  const [title, setTitle] = useState("");
-  const [assigneeId, setAssigneeId] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
   const [query, setQuery] = useState("");
   const [typeF, setTypeF] = useState("");
   const [prioF, setPrioF] = useState("");
@@ -88,6 +86,14 @@ export default function ProjectBoardPage() {
                 <Eye className="h-3.5 w-3.5" /> Read-only
               </span>
             )}
+            <Protected allowed={perms?.can_edit}>
+              <button
+                onClick={() => setShowCreate(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-indigo-700"
+              >
+                <Plus className="h-4 w-4" /> Create
+              </button>
+            </Protected>
             <Protected allowed={perms?.is_owner}>
               <Link
                 href={`/projects/${id}/settings`}
@@ -123,42 +129,6 @@ export default function ProjectBoardPage() {
 
       {view === "board" && (
         <>
-      <Protected allowed={perms?.can_edit}>
-        <form
-          className="flex flex-col gap-2 sm:flex-row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!title.trim()) return;
-            createTask.mutate({ title, assignee_id: assigneeId || null });
-            setTitle("");
-            setAssigneeId("");
-          }}
-        >
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Add a task…"
-            className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-          />
-          <select
-            value={assigneeId}
-            onChange={(e) => setAssigneeId(e.target.value)}
-            className="rounded-lg border bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-            title="Assignee"
-          >
-            <option value="">Unassigned</option>
-            {(members ?? []).map((m) => (
-              <option key={m.user_id} value={m.user_id}>
-                {m.username}
-              </option>
-            ))}
-          </select>
-          <button className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700">
-            <Plus className="h-4 w-4" /> Task
-          </button>
-        </form>
-      </Protected>
-
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative">
@@ -215,6 +185,9 @@ export default function ProjectBoardPage() {
         </>
       )}
 
+      {showCreate && (
+        <CreateIssueModal projectId={id} onClose={() => setShowCreate(false)} />
+      )}
     </div>
   );
 }

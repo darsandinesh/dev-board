@@ -5,7 +5,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
-from app.models.task import TaskPriority, TaskStatus, TaskType
+from app.models.task import LinkType, TaskPriority, TaskStatus, TaskType
 
 
 class TaskCreate(BaseModel):
@@ -19,6 +19,7 @@ class TaskCreate(BaseModel):
     story_points: int | None = Field(default=None, ge=0, le=100)
     due_date: date | None = None
     assignee_id: uuid.UUID | None = None
+    parent_id: uuid.UUID | None = None
     position: int = 0
 
 
@@ -34,12 +35,14 @@ class TaskUpdate(BaseModel):
     story_points: int | None = Field(default=None, ge=0, le=100)
     due_date: date | None = None
     assignee_id: uuid.UUID | None = None
+    parent_id: uuid.UUID | None = None
     position: int | None = None
 
 
 class TaskOut(BaseModel):
     id: uuid.UUID
     project_id: uuid.UUID
+    parent_id: uuid.UUID | None
     seq: int | None
     title: str
     description: str | None
@@ -76,3 +79,29 @@ class ActivityOut(BaseModel):
     action: str
     detail: str | None
     created_at: datetime
+
+
+class LinkCreate(BaseModel):
+    target_id: uuid.UUID
+    link_type: LinkType = LinkType.relates_to
+
+
+class LinkOut(BaseModel):
+    id: uuid.UUID
+    link_type: LinkType
+    target_id: uuid.UUID
+    target_seq: int | None
+    target_title: str
+    target_status: TaskStatus
+
+
+class TaskSummary(BaseModel):
+    """Lightweight issue ref for children / parent display."""
+
+    id: uuid.UUID
+    seq: int | None
+    title: str
+    status: TaskStatus
+    type: TaskType
+
+    model_config = {"from_attributes": True}

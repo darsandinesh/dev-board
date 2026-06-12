@@ -147,6 +147,7 @@ export default function ProjectBoardPage() {
         </div>
         <select value={typeF} onChange={(e) => setTypeF(e.target.value)} className="rounded-lg border bg-white px-2.5 py-1.5 text-sm text-slate-600">
           <option value="">All types</option>
+          <option value="epic">Epic</option>
           <option value="task">Task</option>
           <option value="story">Story</option>
           <option value="bug">Bug</option>

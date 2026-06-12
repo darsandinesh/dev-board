@@ -6,15 +6,24 @@ import {
   ChevronUp,
   Equal,
   SquareCheck,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 
-import type { TaskPriority, TaskType } from "@/lib/api";
+import type { LinkType, TaskPriority, TaskType } from "@/lib/api";
 
 export const TYPE_META: Record<TaskType, { icon: LucideIcon; color: string; label: string }> = {
+  epic: { icon: Zap, color: "text-violet-600", label: "Epic" },
   task: { icon: SquareCheck, color: "text-sky-600", label: "Task" },
   story: { icon: BookOpen, color: "text-emerald-600", label: "Story" },
   bug: { icon: Bug, color: "text-red-600", label: "Bug" },
+};
+
+export const LINK_LABELS: Record<LinkType, string> = {
+  blocks: "blocks",
+  blocked_by: "is blocked by",
+  relates_to: "relates to",
+  duplicates: "duplicates",
 };
 
 export const PRIORITY_META: Record<
@@ -27,7 +36,7 @@ export const PRIORITY_META: Record<
   urgent: { icon: ChevronsUp, color: "text-red-600", label: "Urgent" },
 };
 
-export const TYPES: TaskType[] = ["task", "story", "bug"];
+export const TYPES: TaskType[] = ["epic", "task", "story", "bug"];
 export const PRIORITIES: TaskPriority[] = ["low", "medium", "high", "urgent"];
 export const STATUSES = [
   { value: "todo", label: "To Do" },

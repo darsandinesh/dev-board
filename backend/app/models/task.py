@@ -17,9 +17,17 @@ class TaskStatus(str, enum.Enum):
 
 
 class TaskType(str, enum.Enum):
+    epic = "epic"
     task = "task"
     story = "story"
     bug = "bug"
+
+
+class LinkType(str, enum.Enum):
+    blocks = "blocks"
+    blocked_by = "blocked_by"
+    relates_to = "relates_to"
+    duplicates = "duplicates"
 
 
 class TaskPriority(str, enum.Enum):
@@ -35,6 +43,10 @@ class Task(Base):
     id: Mapped[uuid.UUID] = pk()  # OpenFGA `task:<id>`
     project_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    # Parent issue: a story's epic, or a sub-task's parent task.
+    parent_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("tasks.id", ondelete="SET NULL"), index=True
     )
     seq: Mapped[int | None]  # per-project issue number (key display: PROJ-<seq>)
     title: Mapped[str]
@@ -68,6 +80,20 @@ class TaskComment(Base):
     )
     author_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     body: Mapped[str]
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+
+class TaskLink(Base):
+    """Directed relationship between two issues (blocks / relates_to / …)."""
+
+    __tablename__ = "task_links"
+
+    id: Mapped[uuid.UUID] = pk()
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("tasks.id", ondelete="CASCADE"), index=True
+    )
+    target_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tasks.id", ondelete="CASCADE"))
+    link_type: Mapped[LinkType]
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
 

@@ -4,15 +4,20 @@ import { Send, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Avatar } from "@/components/Avatar";
-import { PRIORITIES, STATUSES, TYPES } from "@/components/issueMeta";
+import { LINK_LABELS, PRIORITIES, STATUSES, TYPES } from "@/components/issueMeta";
 import {
   useActivity,
   useAddComment,
+  useAddLink,
+  useChildren,
   useComments,
+  useLinks,
   useProject,
   useProjectMembers,
+  useRemoveLink,
   useTasks,
   useUpdateTask,
+  type LinkType,
   type Task,
 } from "@/lib/api";
 import { useDragStore } from "@/lib/store";
@@ -63,14 +68,21 @@ function IssueDetail({
   const { data: members } = useProjectMembers(projectId);
   const { data: comments } = useComments(taskId);
   const { data: activity } = useActivity(taskId);
+  const { data: children } = useChildren(taskId);
+  const { data: links } = useLinks(taskId);
   const update = useUpdateTask(projectId);
   const addComment = useAddComment(taskId);
+  const addLink = useAddLink(taskId);
+  const removeLink = useRemoveLink(taskId);
+  const openTask = useDragStore((s) => s.openTask);
 
   const task = tasks?.find((t) => t.id === taskId);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [labels, setLabels] = useState("");
   const [comment, setComment] = useState("");
+  const [linkTarget, setLinkTarget] = useState("");
+  const [linkType, setLinkType] = useState<LinkType>("relates_to");
 
   useEffect(() => {
     if (task) {
@@ -158,6 +170,19 @@ function IssueDetail({
               onChange={(e) => setLabels(e.target.value)}
               onBlur={() => patch({ labels: labels.split(",").map((l) => l.trim()).filter(Boolean) })} />
           </Row>
+          <Row label="Parent">
+            <select value={task.parent_id ?? ""} disabled={ro} className={`${sel} w-full`}
+              onChange={(e) => patch({ parent_id: e.target.value || null })}>
+              <option value="">None</option>
+              {(tasks ?? [])
+                .filter((t) => t.id !== task.id)
+                .map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {project?.key && t.seq != null ? `${project.key}-${t.seq} ` : ""}{t.title}
+                  </option>
+                ))}
+            </select>
+          </Row>
         </div>
 
         {/* Description */}
@@ -172,6 +197,95 @@ function IssueDetail({
             onBlur={() => description !== (task.description ?? "") && patch({ description: description || null })}
             className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-500 disabled:bg-slate-50"
           />
+        </div>
+
+        {/* Sub-tasks / epic children */}
+        {children && children.length > 0 && (
+          <div>
+            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+              Child issues ({children.length})
+            </div>
+            <ul className="divide-y rounded-lg border">
+              {children.map((c) => (
+                <li key={c.id}>
+                  <button
+                    onClick={() => openTask(c.id)}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50"
+                  >
+                    <span className="font-mono text-xs text-slate-400">
+                      {project?.key && c.seq != null ? `${project.key}-${c.seq}` : ""}
+                    </span>
+                    <span className="flex-1 truncate text-slate-700">{c.title}</span>
+                    <span className="text-xs text-slate-400">{c.status}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Linked issues */}
+        <div>
+          <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+            Linked issues {links?.length ? `(${links.length})` : ""}
+          </div>
+          <ul className="space-y-1">
+            {links?.map((l) => (
+              <li key={l.id} className="flex items-center gap-2 text-sm">
+                <span className="w-24 shrink-0 text-xs text-slate-400">
+                  {LINK_LABELS[l.link_type]}
+                </span>
+                <button
+                  onClick={() => openTask(l.target_id)}
+                  className="flex-1 truncate text-left text-slate-700 hover:text-indigo-700"
+                >
+                  <span className="font-mono text-xs text-slate-400">
+                    {project?.key && l.target_seq != null ? `${project.key}-${l.target_seq} ` : ""}
+                  </span>
+                  {l.target_title}
+                </button>
+                {!ro && (
+                  <button
+                    onClick={() => removeLink.mutate(l.id)}
+                    className="text-slate-300 hover:text-red-500"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+          {!ro && (
+            <div className="mt-2 flex gap-2">
+              <select value={linkType} onChange={(e) => setLinkType(e.target.value as LinkType)}
+                className="rounded-lg border px-2 py-1.5 text-xs text-slate-600">
+                {(["blocks", "blocked_by", "relates_to", "duplicates"] as LinkType[]).map((lt) => (
+                  <option key={lt} value={lt}>{LINK_LABELS[lt]}</option>
+                ))}
+              </select>
+              <select value={linkTarget} onChange={(e) => setLinkTarget(e.target.value)}
+                className="flex-1 rounded-lg border px-2 py-1.5 text-xs text-slate-600">
+                <option value="">Select an issue…</option>
+                {(tasks ?? []).filter((t) => t.id !== task.id).map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {project?.key && t.seq != null ? `${project.key}-${t.seq} ` : ""}{t.title}
+                  </option>
+                ))}
+              </select>
+              <button
+                disabled={!linkTarget || addLink.isPending}
+                onClick={() => {
+                  addLink.mutate(
+                    { target_id: linkTarget, link_type: linkType },
+                    { onSuccess: () => setLinkTarget("") },
+                  );
+                }}
+                className="rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-900 disabled:opacity-50"
+              >
+                Link
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Comments */}

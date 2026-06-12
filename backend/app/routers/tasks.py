@@ -21,14 +21,17 @@ from app.core.auth import DBUser
 from app.core.authz import authz, require
 from app.db.session import get_db
 from app.models.project import Project
-from app.models.task import Task, TaskActivity, TaskComment
+from app.models.task import Task, TaskActivity, TaskComment, TaskLink
 from app.models.user import User
 from app.schemas.task import (
     ActivityOut,
     CommentCreate,
     CommentOut,
+    LinkCreate,
+    LinkOut,
     TaskCreate,
     TaskOut,
+    TaskSummary,
     TaskUpdate,
 )
 
@@ -76,6 +79,7 @@ async def create_task(body: TaskCreate, user: DBUser, db: Db):
         story_points=body.story_points,
         due_date=body.due_date,
         assignee_id=body.assignee_id,
+        parent_id=body.parent_id,
         position=body.position,
     )
     db.add(task)
@@ -236,3 +240,72 @@ async def list_activity(task_id: uuid.UUID, user: DBUser, db: Db):
         )
         for a, username in rows.all()
     ]
+
+
+# ---------------------------------------------------------------------------
+# Hierarchy (sub-tasks / epic children) + issue links
+# ---------------------------------------------------------------------------
+@router.get(
+    "/{task_id}/children",
+    response_model=list[TaskSummary],
+    dependencies=[Depends(require("can_view", "task", "task_id"))],
+)
+async def list_children(task_id: uuid.UUID, user: DBUser, db: Db):
+    rows = await db.execute(
+        select(Task).where(Task.parent_id == task_id).order_by(Task.seq)
+    )
+    return list(rows.scalars().all())
+
+
+@router.get(
+    "/{task_id}/links",
+    response_model=list[LinkOut],
+    dependencies=[Depends(require("can_view", "task", "task_id"))],
+)
+async def list_links(task_id: uuid.UUID, user: DBUser, db: Db):
+    rows = await db.execute(
+        select(TaskLink, Task)
+        .join(Task, Task.id == TaskLink.target_id)
+        .where(TaskLink.source_id == task_id)
+    )
+    return [
+        LinkOut(
+            id=link.id, link_type=link.link_type, target_id=t.id,
+            target_seq=t.seq, target_title=t.title, target_status=t.status,
+        )
+        for link, t in rows.all()
+    ]
+
+
+@router.post(
+    "/{task_id}/links",
+    response_model=LinkOut,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require("can_edit", "task", "task_id"))],
+)
+async def add_link(task_id: uuid.UUID, body: LinkCreate, user: DBUser, db: Db):
+    target = await db.get(Task, body.target_id)
+    if target is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Target issue not found")
+    if body.target_id == task_id:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Cannot link an issue to itself")
+    link = TaskLink(source_id=task_id, target_id=body.target_id, link_type=body.link_type)
+    db.add(link)
+    await _log(db, task_id, user.id, "linked", f"{body.link_type.value} {target.title}")
+    await db.flush()
+    return LinkOut(
+        id=link.id, link_type=link.link_type, target_id=target.id,
+        target_seq=target.seq, target_title=target.title, target_status=target.status,
+    )
+
+
+@router.delete(
+    "/{task_id}/links/{link_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require("can_edit", "task", "task_id"))],
+)
+async def remove_link(task_id: uuid.UUID, link_id: uuid.UUID, user: DBUser, db: Db):
+    link = await db.get(TaskLink, link_id)
+    if link is None or link.source_id != task_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Link not found")
+    await db.delete(link)

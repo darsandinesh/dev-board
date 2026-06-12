@@ -21,12 +21,14 @@ export interface Project {
 }
 
 export type TaskStatus = "todo" | "in_progress" | "done";
-export type TaskType = "task" | "story" | "bug";
+export type TaskType = "epic" | "task" | "story" | "bug";
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
+export type LinkType = "blocks" | "blocked_by" | "relates_to" | "duplicates";
 
 export interface Task {
   id: string;
   project_id: string;
+  parent_id: string | null;
   seq: number | null;
   title: string;
   description: string | null;
@@ -40,6 +42,23 @@ export interface Task {
   position: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface TaskSummary {
+  id: string;
+  seq: number | null;
+  title: string;
+  status: TaskStatus;
+  type: TaskType;
+}
+
+export interface Link {
+  id: string;
+  link_type: LinkType;
+  target_id: string;
+  target_seq: number | null;
+  target_title: string;
+  target_status: TaskStatus;
 }
 
 export interface Comment {
@@ -179,6 +198,41 @@ export function useComments(taskId: string) {
   });
 }
 
+export function useChildren(taskId: string) {
+  return useQuery({
+    queryKey: ["children", taskId],
+    queryFn: () => authedFetch<TaskSummary[]>(`/tasks/${taskId}/children`),
+  });
+}
+
+export function useLinks(taskId: string) {
+  return useQuery({
+    queryKey: ["links", taskId],
+    queryFn: () => authedFetch<Link[]>(`/tasks/${taskId}/links`),
+  });
+}
+
+export function useAddLink(taskId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { target_id: string; link_type: LinkType }) =>
+      authedFetch<Link>(`/tasks/${taskId}/links`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["links", taskId] }),
+  });
+}
+
+export function useRemoveLink(taskId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (linkId: string) =>
+      authedFetch<null>(`/tasks/${taskId}/links/${linkId}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["links", taskId] }),
+  });
+}
+
 export function useActivity(taskId: string) {
   return useQuery({
     queryKey: ["activity", taskId],
@@ -230,6 +284,7 @@ export function useCreateTask(projectId: string) {
       const optimistic: Task = {
         id: `temp-${Date.now()}`,
         project_id: projectId,
+        parent_id: null,
         seq: null,
         title: body.title,
         description: null,

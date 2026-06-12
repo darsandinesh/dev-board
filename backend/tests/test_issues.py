@@ -98,6 +98,37 @@ async def test_activity_logged(client, seed):
     assert "status" in actions
 
 
+async def test_epic_parent_and_children(client, seed):
+    org = await seed.org(admin="alice")
+    proj = await seed.project(org, owner="alice")
+    epic = await client.post("/tasks", headers=bearer("alice"),
+                             json={"project_id": proj, "title": "Epic", "type": "epic"})
+    epic_id = epic.json()["id"]
+    assert epic.json()["type"] == "epic"
+    child = await client.post("/tasks", headers=bearer("alice"),
+                              json={"project_id": proj, "title": "Story", "parent_id": epic_id})
+    assert child.json()["parent_id"] == epic_id
+    kids = await client.get(f"/tasks/{epic_id}/children", headers=bearer("alice"))
+    assert kids.status_code == 200
+    assert any(c["title"] == "Story" for c in kids.json())
+
+
+async def test_issue_links(client, seed):
+    org = await seed.org(admin="alice")
+    proj = await seed.project(org, owner="alice")
+    a = await seed.task(proj, editor="alice")
+    b = await seed.task(proj, editor="alice")
+    r = await client.post(f"/tasks/{a}/links", headers=bearer("alice"),
+                          json={"target_id": b, "link_type": "blocks"})
+    assert r.status_code == 201
+    links = await client.get(f"/tasks/{a}/links", headers=bearer("alice"))
+    assert any(l["link_type"] == "blocks" and l["target_id"] == b for l in links.json())
+    # self-link rejected
+    bad = await client.post(f"/tasks/{a}/links", headers=bearer("alice"),
+                            json={"target_id": a, "link_type": "relates_to"})
+    assert bad.status_code == 400
+
+
 async def test_assignee_can_comment(client, seed):
     org = await seed.org(admin="alice")
     proj = await seed.project(org, owner="alice")

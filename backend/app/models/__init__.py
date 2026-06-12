@@ -4,9 +4,11 @@ from app.db.base import Base
 from app.models.org import Org, OrgMember, OrgRole
 from app.models.project import Project, ProjectMember, ProjectRole
 from app.models.task import (
+    LinkType,
     Task,
     TaskActivity,
     TaskComment,
+    TaskLink,
     TaskPriority,
     TaskStatus,
     TaskType,
@@ -25,6 +27,8 @@ __all__ = [
     "Task",
     "TaskComment",
     "TaskActivity",
+    "TaskLink",
+    "LinkType",
     "TaskStatus",
     "TaskType",
     "TaskPriority",

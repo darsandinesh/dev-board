@@ -1,17 +1,21 @@
 "use client";
 
-import { Send, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Download, Paperclip, Send, Trash2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { Avatar } from "@/components/Avatar";
 import { LINK_LABELS, PRIORITIES, STATUSES, TYPES } from "@/components/issueMeta";
 import {
+  downloadAttachment,
   useActivity,
   useAddComment,
   useAddLink,
+  useAttachments,
   useChildren,
   useComments,
+  useDeleteAttachment,
   useLinks,
+  useUploadAttachment,
   useProject,
   useProjectMembers,
   useRemoveLink,
@@ -72,10 +76,14 @@ function IssueDetail({
   const { data: activity } = useActivity(taskId);
   const { data: children } = useChildren(taskId);
   const { data: links } = useLinks(taskId);
+  const { data: attachments } = useAttachments(taskId);
   const update = useUpdateTask(projectId);
   const addComment = useAddComment(taskId);
   const addLink = useAddLink(taskId);
   const removeLink = useRemoveLink(taskId);
+  const uploadAttachment = useUploadAttachment(taskId);
+  const deleteAttachment = useDeleteAttachment(taskId);
+  const fileRef = useRef<HTMLInputElement>(null);
   const openTask = useDragStore((s) => s.openTask);
 
   const task = tasks?.find((t) => t.id === taskId);
@@ -297,6 +305,64 @@ function IssueDetail({
               </button>
             </div>
           )}
+        </div>
+
+        {/* Attachments */}
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              Attachments {attachments?.length ? `(${attachments.length})` : ""}
+            </span>
+            {!ro && (
+              <>
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploadAttachment.isPending}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline disabled:opacity-50"
+                >
+                  <Paperclip className="h-3.5 w-3.5" /> Upload
+                </button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadAttachment.mutate(f);
+                    e.target.value = "";
+                  }}
+                />
+              </>
+            )}
+          </div>
+          <ul className="space-y-1">
+            {attachments?.map((a) => (
+              <li key={a.id} className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                <Paperclip className="h-4 w-4 shrink-0 text-slate-400" />
+                <span className="flex-1 truncate text-slate-700">{a.filename}</span>
+                <span className="text-xs text-slate-400">{Math.ceil(a.size / 1024)} KB</span>
+                <button
+                  onClick={() => downloadAttachment(taskId, a)}
+                  className="text-slate-400 hover:text-indigo-600"
+                  title="Download"
+                >
+                  <Download className="h-4 w-4" />
+                </button>
+                {!ro && (
+                  <button
+                    onClick={() => deleteAttachment.mutate(a.id)}
+                    className="text-slate-300 hover:text-red-500"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </li>
+            ))}
+            {attachments?.length === 0 && (
+              <li className="text-sm text-slate-400">No attachments.</li>
+            )}
+          </ul>
         </div>
 
         {/* Comments */}

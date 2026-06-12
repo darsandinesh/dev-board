@@ -212,6 +212,66 @@ export function useComments(taskId: string) {
   });
 }
 
+// ---- attachments ------------------------------------------------------------
+export interface Attachment {
+  id: string;
+  task_id: string;
+  filename: string;
+  content_type: string;
+  size: number;
+  created_at: string;
+}
+
+export function useAttachments(taskId: string) {
+  return useQuery({
+    queryKey: ["attachments", taskId],
+    queryFn: () => authedFetch<Attachment[]>(`/tasks/${taskId}/attachments`),
+  });
+}
+
+export function useUploadAttachment(taskId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const session = await getSession();
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch(`${API}/tasks/${taskId}/attachments`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session?.accessToken ?? ""}` },
+        body: form, // browser sets multipart boundary
+      });
+      if (!res.ok) throw await res.json().catch(() => ({ detail: res.statusText }));
+      return (await res.json()) as Attachment;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["attachments", taskId] }),
+  });
+}
+
+export function useDeleteAttachment(taskId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      authedFetch<null>(`/tasks/${taskId}/attachments/${id}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["attachments", taskId] }),
+  });
+}
+
+/** Download an attachment with the bearer token, then save via a blob URL. */
+export async function downloadAttachment(taskId: string, att: Attachment) {
+  const session = await getSession();
+  const res = await fetch(`${API}/tasks/${taskId}/attachments/${att.id}/download`, {
+    headers: { Authorization: `Bearer ${session?.accessToken ?? ""}` },
+  });
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = att.filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ---- notifications ----------------------------------------------------------
 export interface Notification {
   id: string;

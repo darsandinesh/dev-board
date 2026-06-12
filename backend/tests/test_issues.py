@@ -156,6 +156,24 @@ async def test_mention_notifies(client, seed):
     assert all(n["is_read"] for n in after)
 
 
+async def test_attachments(client, seed):
+    org = await seed.org(admin="alice")
+    proj = await seed.project(org, owner="alice")
+    tid = await seed.task(proj, editor="alice")
+    up = await client.post(
+        f"/tasks/{tid}/attachments",
+        headers=bearer("alice"),
+        files={"file": ("notes.txt", b"hello world", "text/plain")},
+    )
+    assert up.status_code == 201
+    assert up.json()["filename"] == "notes.txt" and up.json()["size"] == 11
+    att_id = up.json()["id"]
+    lst = await client.get(f"/tasks/{tid}/attachments", headers=bearer("alice"))
+    assert any(a["id"] == att_id for a in lst.json())
+    dl = await client.get(f"/tasks/{tid}/attachments/{att_id}/download", headers=bearer("alice"))
+    assert dl.status_code == 200 and dl.content == b"hello world"
+
+
 async def test_assignee_can_comment(client, seed):
     org = await seed.org(admin="alice")
     proj = await seed.project(org, owner="alice")

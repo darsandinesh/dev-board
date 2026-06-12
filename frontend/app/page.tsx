@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { LoaderScreen } from "@/components/Loader";
+import { toast } from "sonner";
+
+import { Select } from "@/components/Select";
 import { useCreateProject, useOrgs, useProjects } from "@/lib/api";
 import { roleLabel } from "@/lib/roles";
 
@@ -99,21 +102,20 @@ export default function HomePage() {
               if (!name.trim() || !effectiveOrgId) return;
               createProject.mutate(
                 { org_id: effectiveOrgId, name },
-                { onSuccess: () => setName("") },
+                {
+                  onSuccess: () => {
+                    setName("");
+                    toast.success("Project created");
+                  },
+                },
               );
             }}
           >
-            <select
+            <Select
               value={effectiveOrgId}
-              onChange={(e) => setOrgId(e.target.value)}
-              className="rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-            >
-              {adminOrgs.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.name}
-                </option>
-              ))}
-            </select>
+              onChange={setOrgId}
+              options={adminOrgs.map((o) => ({ value: o.id, label: o.name }))}
+            />
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}

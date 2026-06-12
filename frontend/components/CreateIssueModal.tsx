@@ -2,8 +2,10 @@
 
 import { X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { PRIORITIES, TYPES, TYPE_META } from "@/components/issueMeta";
+import { Select } from "@/components/Select";
 import {
   useCreateTask,
   useProjectMembers,
@@ -50,7 +52,12 @@ export function CreateIssueModal({
         story_points: points === "" ? null : Number(points),
         labels: labels.split(",").map((l) => l.trim()).filter(Boolean),
       },
-      { onSuccess: onClose },
+      {
+        onSuccess: () => {
+          toast.success("Issue created");
+          onClose();
+        },
+      },
     );
   };
 
@@ -121,23 +128,18 @@ export function CreateIssueModal({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={label}>Priority</label>
-              <select value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)} className={ctl}>
-                {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
+              <Select value={priority} onChange={(v) => setPriority(v as TaskPriority)} className="w-full capitalize"
+                options={PRIORITIES.map((p) => ({ value: p, label: p }))} />
             </div>
             <div>
               <label className={label}>Assignee</label>
-              <select value={assignee} onChange={(e) => setAssignee(e.target.value)} className={ctl}>
-                <option value="">Unassigned</option>
-                {members?.map((m) => <option key={m.user_id} value={m.user_id}>{m.username}</option>)}
-              </select>
+              <Select value={assignee} onChange={setAssignee} className="w-full"
+                options={[{ value: "", label: "Unassigned" }, ...(members ?? []).map((m) => ({ value: m.user_id, label: m.username }))]} />
             </div>
             <div>
               <label className={label}>Sprint</label>
-              <select value={sprint} onChange={(e) => setSprint(e.target.value)} className={ctl}>
-                <option value="">Backlog</option>
-                {(sprints ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+              <Select value={sprint} onChange={setSprint} className="w-full"
+                options={[{ value: "", label: "Backlog" }, ...(sprints ?? []).map((s) => ({ value: s.id, label: s.name }))]} />
             </div>
             <div>
               <label className={label}>Story points</label>

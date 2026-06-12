@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 
 import { Avatar } from "@/components/Avatar";
 import { Loader } from "@/components/Loader";
+import { Select } from "@/components/Select";
 import {
   useMe,
   useProjectMembers,
@@ -48,20 +49,12 @@ export function MemberTable({
             </div>
             {canManage ? (
               <div className="flex items-center gap-2">
-                <select
+                <Select
                   value={m.role}
                   disabled={isSelf}
-                  onChange={(e) =>
-                    updateRole.mutate({ userId: m.user_id, role: e.target.value })
-                  }
-                  className="rounded-lg border px-2.5 py-1.5 text-sm outline-none focus:border-indigo-500 disabled:bg-slate-50 disabled:text-slate-400"
-                >
-                  {ROLES.map((r) => (
-                    <option key={r} value={r}>
-                      {roleLabel(r)}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(role) => updateRole.mutate({ userId: m.user_id, role })}
+                  options={ROLES.map((r) => ({ value: r, label: roleLabel(r) }))}
+                />
                 {!isSelf && (
                   <button
                     onClick={() => removeMember.mutate(m.user_id)}

@@ -2,10 +2,12 @@
 
 import { Building2, ShieldCheck, Trash2, Users } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { AddMemberSearch } from "@/components/AddMemberSearch";
 import { Avatar } from "@/components/Avatar";
 import { Loader, LoaderScreen } from "@/components/Loader";
+import { Select } from "@/components/Select";
 import {
   useAddOrgMember,
   useMe,
@@ -57,17 +59,11 @@ export default function MembersPage() {
         <label className="flex items-center gap-2 text-sm text-slate-500">
           <Building2 className="h-4 w-4" />
           Organization
-          <select
+          <Select
             value={orgId ?? ""}
-            onChange={(e) => setOrgId(e.target.value)}
-            className="rounded-lg border bg-white px-3 py-1.5 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-          >
-            {adminOrgs.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.name}
-              </option>
-            ))}
-          </select>
+            onChange={setOrgId}
+            options={adminOrgs.map((o) => ({ value: o.id, label: o.name }))}
+          />
         </label>
       </div>
 
@@ -84,7 +80,9 @@ export default function MembersPage() {
           roles={ORG_ROLES}
           excludeIds={(members ?? []).map((m) => m.user_id)}
           pending={addMember.isPending}
-          onAdd={(userId, role) => addMember.mutate({ userId, role })}
+          onAdd={(userId, role) =>
+            addMember.mutate({ userId, role }, { onSuccess: () => toast.success("Member added") })
+          }
         />
 
         <div className="mt-5">
@@ -106,20 +104,12 @@ export default function MembersPage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <select
+                      <Select
                         value={m.role}
                         disabled={isSelf}
-                        onChange={(e) =>
-                          updateRole.mutate({ userId: m.user_id, role: e.target.value })
-                        }
-                        className="rounded-lg border px-2.5 py-1.5 text-sm outline-none focus:border-indigo-500 disabled:bg-slate-50 disabled:text-slate-400"
-                      >
-                        {ORG_ROLES.map((r) => (
-                          <option key={r} value={r}>
-                            {roleLabel(r)}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(role) => updateRole.mutate({ userId: m.user_id, role })}
+                        options={ORG_ROLES.map((r) => ({ value: r, label: roleLabel(r) }))}
+                      />
                       {m.role === "admin" && (
                         <ShieldCheck className="h-4 w-4 text-indigo-500" />
                       )}

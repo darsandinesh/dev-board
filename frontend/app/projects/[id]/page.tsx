@@ -9,6 +9,7 @@ import { Backlog } from "@/components/Backlog";
 import { Board } from "@/components/Board";
 import { CreateIssueModal } from "@/components/CreateIssueModal";
 import { Reports } from "@/components/Reports";
+import { Select } from "@/components/Select";
 import { ErrorState } from "@/components/ErrorState";
 import { LoaderScreen } from "@/components/Loader";
 import { Protected } from "@/components/Protected";
@@ -140,27 +141,12 @@ export default function ProjectBoardPage() {
             className="rounded-lg border bg-white py-1.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-500"
           />
         </div>
-        <select value={typeF} onChange={(e) => setTypeF(e.target.value)} className="rounded-lg border bg-white px-2.5 py-1.5 text-sm text-slate-600">
-          <option value="">All types</option>
-          <option value="epic">Epic</option>
-          <option value="task">Task</option>
-          <option value="story">Story</option>
-          <option value="bug">Bug</option>
-        </select>
-        <select value={prioF} onChange={(e) => setPrioF(e.target.value)} className="rounded-lg border bg-white px-2.5 py-1.5 text-sm text-slate-600">
-          <option value="">All priorities</option>
-          <option value="urgent">Urgent</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-        </select>
-        <select value={assigneeF} onChange={(e) => setAssigneeF(e.target.value)} className="rounded-lg border bg-white px-2.5 py-1.5 text-sm text-slate-600">
-          <option value="">All assignees</option>
-          <option value="none">Unassigned</option>
-          {(members ?? []).map((m) => (
-            <option key={m.user_id} value={m.user_id}>{m.username}</option>
-          ))}
-        </select>
+        <Select value={typeF} onChange={setTypeF}
+          options={[{ value: "", label: "All types" }, { value: "epic", label: "Epic" }, { value: "task", label: "Task" }, { value: "story", label: "Story" }, { value: "bug", label: "Bug" }]} />
+        <Select value={prioF} onChange={setPrioF}
+          options={[{ value: "", label: "All priorities" }, { value: "urgent", label: "Urgent" }, { value: "high", label: "High" }, { value: "medium", label: "Medium" }, { value: "low", label: "Low" }]} />
+        <Select value={assigneeF} onChange={setAssigneeF}
+          options={[{ value: "", label: "All assignees" }, { value: "none", label: "Unassigned" }, ...(members ?? []).map((m) => ({ value: m.user_id, label: m.username }))]} />
         {(query || typeF || prioF || assigneeF) && (
           <button
             onClick={() => { setQuery(""); setTypeF(""); setPrioF(""); setAssigneeF(""); }}

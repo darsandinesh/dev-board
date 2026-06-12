@@ -4,6 +4,7 @@ import { Check, Search, UserPlus } from "lucide-react";
 import { useState } from "react";
 
 import { Avatar } from "@/components/Avatar";
+import { Select } from "@/components/Select";
 import { useUserSearch } from "@/lib/api";
 import { roleLabel } from "@/lib/roles";
 
@@ -40,17 +41,11 @@ export function AddMemberSearch({
             className="w-full rounded-lg border bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
           />
         </div>
-        <select
+        <Select
           value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className="rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-        >
-          {roles.map((r) => (
-            <option key={r} value={r}>
-              {roleLabel(r)}
-            </option>
-          ))}
-        </select>
+          onChange={setRole}
+          options={roles.map((r) => ({ value: r, label: roleLabel(r) }))}
+        />
       </div>
 
       {query && (

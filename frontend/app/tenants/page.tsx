@@ -3,6 +3,7 @@
 import { Building2, Plus, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { ErrorState } from "@/components/ErrorState";
 import { LoaderScreen } from "@/components/Loader";
@@ -64,6 +65,7 @@ export default function TenantsPage() {
                   setName("");
                   setAdmin(null);
                   setAdminQuery("");
+                  toast.success("Tenant created");
                 },
               },
             );

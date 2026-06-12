@@ -4,6 +4,7 @@ import { ArrowLeft, SlidersHorizontal, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { AddMemberSearch } from "@/components/AddMemberSearch";
 import { ErrorState } from "@/components/ErrorState";
@@ -103,7 +104,10 @@ export default function ProjectSettingsPage() {
             <button
               disabled={!dirty || updateProject.isPending}
               onClick={() =>
-                updateProject.mutate({ name, description: description || null })
+                updateProject.mutate(
+                  { name, description: description || null },
+                  { onSuccess: () => toast.success("Project updated") },
+                )
               }
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
             >
@@ -140,7 +144,9 @@ export default function ProjectSettingsPage() {
               roles={PROJECT_ROLES}
               excludeIds={(members ?? []).map((m) => m.user_id)}
               pending={addMember.isPending}
-              onAdd={(userId, role) => addMember.mutate({ userId, role })}
+              onAdd={(userId, role) =>
+                addMember.mutate({ userId, role }, { onSuccess: () => toast.success("Member added") })
+              }
             />
           </div>
         )}

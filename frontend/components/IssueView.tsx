@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { AttachmentItem } from "@/components/AttachmentItem";
 import { Avatar } from "@/components/Avatar";
 import { LoaderScreen } from "@/components/Loader";
+import { Select } from "@/components/Select";
 import { LINK_LABELS, PRIORITIES, STATUSES, TYPES, TYPE_META } from "@/components/issueMeta";
 import {
   useActivity,
@@ -230,19 +231,13 @@ export function IssueView({
             </ul>
             {!ro && (
               <div className="mt-2 flex gap-2">
-                <select value={linkType} onChange={(e) => setLinkType(e.target.value as LinkType)} className="rounded-md border px-2 py-1.5 text-xs text-slate-600">
-                  {(["blocks", "blocked_by", "relates_to", "duplicates"] as LinkType[]).map((lt) => (
-                    <option key={lt} value={lt}>{LINK_LABELS[lt]}</option>
-                  ))}
-                </select>
-                <select value={linkTarget} onChange={(e) => setLinkTarget(e.target.value)} className="flex-1 rounded-md border px-2 py-1.5 text-xs text-slate-600">
-                  <option value="">Select an issue…</option>
-                  {(tasks ?? []).filter((t) => t.id !== task.id).map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {project?.key && t.seq != null ? `${project.key}-${t.seq} ` : ""}{t.title}
-                    </option>
-                  ))}
-                </select>
+                <Select value={linkType} onChange={(v) => setLinkType(v as LinkType)}
+                  options={(["blocks", "blocked_by", "relates_to", "duplicates"] as LinkType[]).map((lt) => ({ value: lt, label: LINK_LABELS[lt] }))} />
+                <Select value={linkTarget} onChange={setLinkTarget} placeholder="Select an issue…" className="flex-1"
+                  options={(tasks ?? []).filter((t) => t.id !== task.id).map((t) => ({
+                    value: t.id,
+                    label: `${project?.key && t.seq != null ? `${project.key}-${t.seq} ` : ""}${t.title}`,
+                  }))} />
                 <button disabled={!linkTarget || addLink.isPending}
                   onClick={() => addLink.mutate({ target_id: linkTarget, link_type: linkType }, { onSuccess: () => setLinkTarget("") })}
                   className="rounded-md bg-slate-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-900 disabled:opacity-50">
@@ -335,60 +330,53 @@ export function IssueView({
 
         {/* SIDEBAR */}
         <aside className="space-y-4">
-          <select value={task.status} disabled={ro}
-            onChange={(e) => patch({ status: e.target.value as Task["status"] })}
-            className={`w-full rounded-md px-3 py-1.5 text-sm font-semibold ${STATUS_PILL[task.status]} disabled:opacity-100`}>
-            {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-          </select>
+          <Select
+            value={task.status}
+            disabled={ro}
+            onChange={(v) => patch({ status: v as Task["status"] })}
+            className={`w-full font-semibold ${STATUS_PILL[task.status]}`}
+            options={STATUSES.map((s) => ({ value: s.value, label: s.label }))}
+          />
 
           <div className="space-y-3 rounded-lg border bg-white p-4">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Details</div>
             <Field label="Assignee">
-              <select value={task.assignee_id ?? ""} disabled={ro} className={ctl}
-                onChange={(e) => patch({ assignee_id: e.target.value || null })}>
-                <option value="">Unassigned</option>
-                {members?.map((m) => <option key={m.user_id} value={m.user_id}>{m.username}</option>)}
-              </select>
+              <Select value={task.assignee_id ?? ""} disabled={ro} className="w-full"
+                onChange={(v) => patch({ assignee_id: v || null })}
+                options={[{ value: "", label: "Unassigned" }, ...(members ?? []).map((m) => ({ value: m.user_id, label: m.username }))]} />
             </Field>
             <Field label="Reporter">
-              <div className="flex items-center gap-2 px-2 py-1 text-sm text-slate-600">
+              <div className="flex items-center gap-2 px-1 py-1 text-sm text-slate-600">
                 {reporter ? <Avatar name={reporter} size={20} /> : null}
                 {reporter ?? "—"}
               </div>
             </Field>
             <Field label="Type">
-              <select value={task.type} disabled={ro} className={ctl}
-                onChange={(e) => patch({ type: e.target.value as Task["type"] })}>
-                {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
+              <Select value={task.type} disabled={ro} className="w-full capitalize"
+                onChange={(v) => patch({ type: v as Task["type"] })}
+                options={TYPES.map((t) => ({ value: t, label: t }))} />
             </Field>
             <Field label="Priority">
-              <select value={task.priority} disabled={ro} className={ctl}
-                onChange={(e) => patch({ priority: e.target.value as Task["priority"] })}>
-                {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
+              <Select value={task.priority} disabled={ro} className="w-full capitalize"
+                onChange={(v) => patch({ priority: v as Task["priority"] })}
+                options={PRIORITIES.map((p) => ({ value: p, label: p }))} />
             </Field>
             <Field label="Sprint">
-              <select value={task.sprint_id ?? ""} disabled={ro} className={ctl}
-                onChange={(e) => patch({ sprint_id: e.target.value || null })}>
-                <option value="">Backlog</option>
-                {(sprints ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+              <Select value={task.sprint_id ?? ""} disabled={ro} className="w-full"
+                onChange={(v) => patch({ sprint_id: v || null })}
+                options={[{ value: "", label: "Backlog" }, ...(sprints ?? []).map((s) => ({ value: s.id, label: s.name }))]} />
             </Field>
             <Field label="Story points">
               <input type="number" min={0} defaultValue={task.story_points ?? ""} disabled={ro} className={ctl}
                 onBlur={(e) => patch({ story_points: e.target.value === "" ? null : Number(e.target.value) })} />
             </Field>
             <Field label="Parent">
-              <select value={task.parent_id ?? ""} disabled={ro} className={ctl}
-                onChange={(e) => patch({ parent_id: e.target.value || null })}>
-                <option value="">None</option>
-                {(tasks ?? []).filter((t) => t.id !== task.id).map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {project?.key && t.seq != null ? `${project.key}-${t.seq} ` : ""}{t.title}
-                  </option>
-                ))}
-              </select>
+              <Select value={task.parent_id ?? ""} disabled={ro} className="w-full"
+                onChange={(v) => patch({ parent_id: v || null })}
+                options={[{ value: "", label: "None" }, ...(tasks ?? []).filter((t) => t.id !== task.id).map((t) => ({
+                  value: t.id,
+                  label: `${project?.key && t.seq != null ? `${project.key}-${t.seq} ` : ""}${t.title}`,
+                }))]} />
             </Field>
             <Field label="Due date">
               <input type="date" defaultValue={task.due_date ?? ""} disabled={ro} className={ctl}

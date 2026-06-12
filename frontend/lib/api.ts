@@ -203,7 +203,33 @@ export function useCreateTask(projectId: string) {
         method: "POST",
         body: JSON.stringify({ project_id: projectId, ...body }),
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks", projectId] }),
+    // Optimistically add the new task so it shows on the board immediately.
+    onMutate: async (body) => {
+      await qc.cancelQueries({ queryKey: ["tasks", projectId] });
+      const prev = qc.getQueryData<Task[]>(["tasks", projectId]);
+      const optimistic: Task = {
+        id: `temp-${Date.now()}`,
+        project_id: projectId,
+        title: body.title,
+        description: null,
+        status: body.status ?? "todo",
+        type: "task",
+        priority: "medium",
+        labels: [],
+        story_points: null,
+        due_date: null,
+        assignee_id: body.assignee_id ?? null,
+        position: 999,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      qc.setQueryData<Task[]>(["tasks", projectId], (old) => [...(old ?? []), optimistic]);
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(["tasks", projectId], ctx.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["tasks", projectId] }),
   });
 }
 

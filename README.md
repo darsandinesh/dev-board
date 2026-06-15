@@ -76,6 +76,39 @@ Cases 1–5 prove authentication, 6–12 prove authorization, 13 proves cache
 invalidation on role revocation. There's also an end-to-end script driving real
 Keycloak tokens: `python scripts/day3-authz-test.py` (needs the API + Keycloak up).
 
+## Code quality
+
+Linting and formatting are enforced by **pre-commit** hooks that run on every commit.
+
+| Repo | Lint | Format | Types |
+|---|---|---|---|
+| `backend/` | ruff | ruff format | — |
+| `frontend/` | ESLint (`next` + unused-imports) | Prettier (+ Tailwind class sort) | `tsc --noEmit` |
+
+The hook framework lives in the backend venv. On a fresh clone, install the git hook once:
+
+```bash
+backend/.venv/bin/pre-commit install        # wires .git/hooks/pre-commit
+backend/.venv/bin/pre-commit run --all-files # optional: lint the whole tree now
+```
+
+After that, `git commit` automatically formats/lints only the files you staged
+(ruff for `backend/`, ESLint + Prettier + typecheck for `frontend/`). Run the
+tools directly while developing:
+
+```bash
+# backend
+cd backend && .venv/bin/ruff check --fix . && .venv/bin/ruff format .
+
+# frontend
+cd frontend && npm run lint:fix && npm run format && npm run typecheck
+```
+
+Config lives in [backend/pyproject.toml](./backend/pyproject.toml) (`[tool.ruff]`),
+[frontend/.eslintrc.json](./frontend/.eslintrc.json),
+[frontend/.prettierrc.json](./frontend/.prettierrc.json), and
+[.pre-commit-config.yaml](./.pre-commit-config.yaml).
+
 ## Layout
 
 ```

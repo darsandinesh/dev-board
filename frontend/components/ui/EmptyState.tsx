@@ -8,9 +8,9 @@ export function EmptyState({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-dashed bg-white p-10 text-center">
-      {Icon && <Icon className="mx-auto mb-2 h-8 w-8 text-slate-300" />}
-      <p className="text-sm text-slate-500">{children}</p>
+    <div className="rounded-2xl border border-dashed bg-white p-10 text-center dark:bg-slate-900">
+      {Icon && <Icon className="mx-auto mb-2 h-8 w-8 text-slate-300 dark:text-slate-600" />}
+      <p className="text-sm text-slate-500 dark:text-slate-400">{children}</p>
     </div>
   );
 }

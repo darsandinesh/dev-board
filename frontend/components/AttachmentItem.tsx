@@ -36,7 +36,7 @@ export function AttachmentItem({
   }, [taskId, att.id, isImage]);
 
   return (
-    <li className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+    <li className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm dark:bg-slate-900">
       {isImage && thumb ? (
         <button onClick={() => onPreview(thumb)} className="shrink-0">
           <img src={thumb} alt={att.filename} className="h-10 w-10 rounded object-cover" />
@@ -44,7 +44,7 @@ export function AttachmentItem({
       ) : (
         <Paperclip className="h-4 w-4 shrink-0 text-slate-400" />
       )}
-      <span className="flex-1 truncate text-slate-700">{att.filename}</span>
+      <span className="flex-1 truncate text-slate-700 dark:text-slate-200">{att.filename}</span>
       <span className="text-xs text-slate-400">{Math.ceil(att.size / 1024)} KB</span>
       <button
         onClick={() => downloadAttachment(taskId, att)}

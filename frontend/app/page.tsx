@@ -91,10 +91,10 @@ export default function HomePage() {
         </div>
 
         {adminOrgs.length === 0 ? (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             You need to be an admin of an organization to add projects. Tenants are provisioned from
             the{" "}
-            <Link href="/tenants" className="text-indigo-600 hover:underline">
+            <Link href="/tenants" className="text-indigo-600 hover:underline dark:text-indigo-400">
               Tenants
             </Link>{" "}
             page (platform admins).
@@ -152,12 +152,12 @@ export default function HomePage() {
               <li key={p.id}>
                 <Link
                   href={`/projects/${p.id}`}
-                  className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md"
+                  className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md dark:bg-slate-900 dark:hover:border-indigo-500"
                 >
                   <div className={`h-1.5 w-full ${ROLE_BAR[role] ?? ROLE_BAR.viewer}`} />
                   <div className="flex flex-1 flex-col p-5">
                     <div className="flex items-start justify-between">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
                         <FolderKanban className="h-5 w-5" />
                       </span>
                       <Badge tone={ROLE_TONE[role] ?? "slate"}>
@@ -165,11 +165,11 @@ export default function HomePage() {
                         {roleLabel(role)}
                       </Badge>
                     </div>
-                    <div className="mt-3 font-semibold text-slate-900 group-hover:text-indigo-700">
+                    <div className="mt-3 font-semibold text-slate-900 group-hover:text-indigo-700 dark:text-slate-100 dark:group-hover:text-indigo-400">
                       {p.name}
                     </div>
                     {p.description && (
-                      <div className="mt-1 line-clamp-2 text-sm text-slate-500">
+                      <div className="mt-1 line-clamp-2 text-sm text-slate-500 dark:text-slate-400">
                         {p.description}
                       </div>
                     )}

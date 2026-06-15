@@ -40,8 +40,8 @@ export default function MembersPage() {
   if (adminOrgs.length === 0) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-slate-900">Members</h1>
-        <div className="rounded-2xl border border-dashed bg-white p-10 text-center text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Members</h1>
+        <div className="rounded-2xl border border-dashed bg-white p-10 text-center text-sm text-slate-500 dark:bg-slate-900 dark:text-slate-400">
           You don’t administer any organization yet. Create one in{" "}
           <a href="/settings" className="text-indigo-600 hover:underline">
             Settings
@@ -55,7 +55,7 @@ export default function MembersPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-900">Members</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Members</h1>
         <label className="flex items-center gap-2 text-sm text-slate-500">
           <Building2 className="h-4 w-4" />
           Organization
@@ -67,8 +67,8 @@ export default function MembersPage() {
         </label>
       </div>
 
-      <section className="rounded-2xl border bg-white p-6 shadow-sm">
-        <h2 className="mb-3 flex items-center gap-2 font-semibold text-slate-900">
+      <section className="rounded-2xl border bg-white p-6 shadow-sm dark:bg-slate-900">
+        <h2 className="mb-3 flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
           <Users className="h-5 w-5 text-indigo-600" /> Organization members
         </h2>
         <p className="mb-4 text-sm text-slate-500">
@@ -98,7 +98,7 @@ export default function MembersPage() {
                   <li key={m.user_id} className="flex items-center justify-between py-3">
                     <div className="flex items-center gap-3">
                       <Avatar name={m.username} size={32} />
-                      <span className="font-medium text-slate-700">
+                      <span className="font-medium text-slate-700 dark:text-slate-200">
                         {m.username}
                         {isSelf && <span className="ml-1 text-xs text-slate-400">(you)</span>}
                       </span>

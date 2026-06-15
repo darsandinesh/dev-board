@@ -11,7 +11,9 @@ function Field({ label, value, mono }: { label: string; value: string; mono?: bo
   return (
     <div>
       <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</dt>
-      <dd className={`mt-0.5 break-all text-sm text-slate-700 ${mono ? "font-mono" : ""}`}>
+      <dd
+        className={`mt-0.5 break-all text-sm text-slate-700 dark:text-slate-200 ${mono ? "font-mono" : ""}`}
+      >
         {value || <span className="text-slate-300">—</span>}
       </dd>
     </div>
@@ -43,15 +45,17 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Profile</h1>
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Profile</h1>
 
       {/* Identity header */}
-      <section className="rounded-2xl border bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border bg-white p-6 shadow-sm dark:bg-slate-900">
         <div className="flex items-center gap-4">
           <Avatar name={fullName} size={64} />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xl font-semibold text-slate-900">{fullName}</span>
+              <span className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                {fullName}
+              </span>
               {me.is_platform_admin && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
                   <Sparkles className="h-3 w-3" /> Platform Admin
@@ -96,8 +100,8 @@ export default function ProfilePage() {
       </section>
 
       {/* Organizations */}
-      <section className="rounded-2xl border bg-white p-6 shadow-sm">
-        <h2 className="flex items-center gap-2 font-semibold text-slate-900">
+      <section className="rounded-2xl border bg-white p-6 shadow-sm dark:bg-slate-900">
+        <h2 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
           <Building2 className="h-5 w-5 text-indigo-600" /> Organizations
           <span className="ml-1 rounded-full bg-slate-100 px-2 text-xs text-slate-500">
             {orgs?.length ?? 0}
@@ -107,7 +111,7 @@ export default function ProfilePage() {
           <ul className="mt-4 divide-y">
             {orgs.map((o) => (
               <li key={o.id} className="flex items-center justify-between py-2.5">
-                <span className="font-medium text-slate-700">{o.name}</span>
+                <span className="font-medium text-slate-700 dark:text-slate-200">{o.name}</span>
                 <RoleChip role={o.my_role} />
               </li>
             ))}
@@ -120,8 +124,8 @@ export default function ProfilePage() {
       </section>
 
       {/* Projects */}
-      <section className="rounded-2xl border bg-white p-6 shadow-sm">
-        <h2 className="flex items-center gap-2 font-semibold text-slate-900">
+      <section className="rounded-2xl border bg-white p-6 shadow-sm dark:bg-slate-900">
+        <h2 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
           <FolderKanban className="h-5 w-5 text-indigo-600" /> Projects
           <span className="ml-1 rounded-full bg-slate-100 px-2 text-xs text-slate-500">
             {projects?.length ?? 0}
@@ -133,7 +137,7 @@ export default function ProfilePage() {
               <li key={p.id} className="flex items-center justify-between py-2.5">
                 <a
                   href={`/projects/${p.id}`}
-                  className="font-medium text-slate-700 hover:text-indigo-700"
+                  className="font-medium text-slate-700 hover:text-indigo-700 dark:text-slate-200 dark:hover:text-indigo-400"
                 >
                   {p.name}
                 </a>

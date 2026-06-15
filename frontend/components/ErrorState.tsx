@@ -23,12 +23,14 @@ export function ErrorState({
   const Icon = ICONS[code] ?? ICONS.default;
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
         <Icon className="h-8 w-8" />
       </div>
-      <div className="mt-4 text-5xl font-bold tracking-tight text-slate-900">{code}</div>
-      <h1 className="mt-2 text-lg font-semibold text-slate-800">{title}</h1>
-      <p className="mt-1 max-w-sm text-sm text-slate-500">{message}</p>
+      <div className="mt-4 text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        {code}
+      </div>
+      <h1 className="mt-2 text-lg font-semibold text-slate-800 dark:text-slate-100">{title}</h1>
+      <p className="mt-1 max-w-sm text-sm text-slate-500 dark:text-slate-400">{message}</p>
       <div className="mt-6 flex gap-3">
         {action ?? (
           <Link

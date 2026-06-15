@@ -18,6 +18,7 @@ import { usePathname } from "next/navigation";
 import { useMe } from "@/lib/api";
 import { federatedSignOut } from "@/lib/logout";
 import { useUiStore } from "@/lib/store";
+import { ThemeToggle } from "./ThemeToggle";
 
 type NavItem = {
   href: string;
@@ -95,8 +96,9 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* footer: sign out */}
-      <div className="border-t border-slate-800 p-3">
+      {/* footer: theme switcher + sign out */}
+      <div className="space-y-1 border-t border-slate-800 p-3">
+        <ThemeToggle collapsed={collapsed} />
         <button
           onClick={() => federatedSignOut(session?.idToken)}
           title={collapsed ? "Sign out" : undefined}

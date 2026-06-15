@@ -47,14 +47,23 @@ export function Breadcrumbs() {
         const last = i === crumbs.length - 1;
         return (
           <span key={i} className="flex min-w-0 items-center gap-1">
-            {i > 0 && <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300" />}
+            {i > 0 && (
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300 dark:text-slate-600" />
+            )}
             {c.href && !last ? (
-              <Link href={c.href} className="truncate text-slate-500 hover:text-slate-800">
+              <Link
+                href={c.href}
+                className="truncate text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
+              >
                 {c.label}
               </Link>
             ) : (
               <span
-                className={last ? "truncate font-medium text-slate-800" : "truncate text-slate-500"}
+                className={
+                  last
+                    ? "truncate font-medium text-slate-800 dark:text-slate-100"
+                    : "truncate text-slate-500 dark:text-slate-400"
+                }
               >
                 {c.label}
               </span>

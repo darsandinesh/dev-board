@@ -28,12 +28,12 @@ export function ConfirmDialog({
     <Dialog title={undefined} onClose={onCancel} className="max-w-sm">
       <div className="p-5">
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400">
             <AlertTriangle className="h-5 w-5" />
           </span>
           <div>
-            <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-            <div className="mt-1 text-sm text-slate-500">{message}</div>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+            <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{message}</div>
           </div>
         </div>
         <div className="mt-5 flex justify-end gap-2">

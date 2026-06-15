@@ -75,14 +75,16 @@ export function GettingStarted({
   }
 
   return (
-    <Card className="border-indigo-100 bg-gradient-to-br from-indigo-50/60 to-white">
+    <Card className="border-indigo-100 bg-gradient-to-br from-indigo-50/60 to-white dark:border-indigo-950 dark:from-indigo-950/40 dark:to-slate-900">
       <div className="flex items-center gap-2">
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white">
           <Rocket className="h-5 w-5" />
         </span>
         <div>
-          <h2 className="font-semibold text-slate-900">Welcome to DevBoard</h2>
-          <p className="text-sm text-slate-500">A few steps to get your first board going.</p>
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Welcome to DevBoard</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            A few steps to get your first board going.
+          </p>
         </div>
       </div>
 
@@ -91,15 +93,15 @@ export function GettingStarted({
           const Icon = s.icon;
           return (
             <li key={i} className="flex gap-3">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-sm font-semibold text-indigo-600 shadow-sm ring-1 ring-indigo-100">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-sm font-semibold text-indigo-600 shadow-sm ring-1 ring-indigo-100 dark:bg-slate-800 dark:text-indigo-400 dark:ring-indigo-900/60">
                 {i + 1}
               </span>
               <div>
-                <div className="flex items-center gap-1.5 font-medium text-slate-800">
+                <div className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-100">
                   <Icon className="h-4 w-4 text-indigo-500" />
                   {s.title}
                 </div>
-                <p className="text-sm text-slate-500">{s.body}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{s.body}</p>
               </div>
             </li>
           );

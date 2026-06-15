@@ -38,7 +38,7 @@ export default function TenantsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Tenants</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Tenants</h1>
         <p className="mt-1 text-sm text-slate-500">
           Provision organizations and assign their first tenant-admin. Each new tenant gets a
           default “General” project.
@@ -47,7 +47,7 @@ export default function TenantsPage() {
 
       {/* Create tenant */}
       <Card>
-        <h2 className="mb-4 flex items-center gap-2 font-semibold text-slate-900">
+        <h2 className="mb-4 flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
           <Plus className="h-5 w-5 text-indigo-600" /> New tenant
         </h2>
         <form
@@ -80,14 +80,14 @@ export default function TenantsPage() {
           <div>
             <Label>Initial tenant-admin (optional — defaults to you)</Label>
             {admin ? (
-              <div className="flex items-center justify-between rounded-lg border bg-slate-50 px-3 py-2 text-sm">
-                <span className="font-medium text-slate-700">
+              <div className="flex items-center justify-between rounded-lg border bg-slate-50 px-3 py-2 text-sm dark:bg-slate-800">
+                <span className="font-medium text-slate-700 dark:text-slate-200">
                   {admin.username} <span className="text-slate-400">({admin.email})</span>
                 </span>
                 <button
                   type="button"
                   onClick={() => setAdmin(null)}
-                  className="text-xs text-slate-500 hover:text-slate-800"
+                  className="text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
                 >
                   Change
                 </button>
@@ -100,15 +100,17 @@ export default function TenantsPage() {
                   placeholder="Search a user to make tenant-admin…"
                 />
                 {adminQuery && candidates && candidates.length > 0 && (
-                  <ul className="mt-1 max-h-40 divide-y overflow-auto rounded-lg border bg-white">
+                  <ul className="mt-1 max-h-40 divide-y overflow-auto rounded-lg border bg-white dark:bg-slate-900">
                     {candidates.map((u) => (
                       <li key={u.id}>
                         <button
                           type="button"
                           onClick={() => setAdmin(u)}
-                          className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-slate-50"
+                          className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
                         >
-                          <span className="font-medium text-slate-700">{u.username}</span>
+                          <span className="font-medium text-slate-700 dark:text-slate-200">
+                            {u.username}
+                          </span>
                           <span className="text-xs text-slate-400">{u.email}</span>
                         </button>
                       </li>
@@ -127,7 +129,7 @@ export default function TenantsPage() {
 
       {/* All tenants */}
       <Card>
-        <h2 className="flex items-center gap-2 font-semibold text-slate-900">
+        <h2 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
           <Building2 className="h-5 w-5 text-indigo-600" /> All tenants
           <span className="ml-1 rounded-full bg-slate-100 px-2 text-xs text-slate-500">
             {orgs?.length ?? 0}
@@ -137,7 +139,7 @@ export default function TenantsPage() {
           <ul className="mt-4 divide-y">
             {orgs.map((o) => (
               <li key={o.id} className="flex items-center justify-between py-2.5">
-                <span className="font-medium text-slate-700">{o.name}</span>
+                <span className="font-medium text-slate-700 dark:text-slate-200">{o.name}</span>
                 <Link
                   href="/members"
                   className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline"

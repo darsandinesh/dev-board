@@ -152,6 +152,19 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
             );
           })}
         </ul>
+
+        <div className="flex items-center gap-4 border-t bg-slate-50 px-4 py-2 text-[11px] text-slate-400">
+          <span>
+            <kbd className="rounded border bg-white px-1">↑</kbd>{" "}
+            <kbd className="rounded border bg-white px-1">↓</kbd> navigate
+          </span>
+          <span>
+            <kbd className="rounded border bg-white px-1">↵</kbd> open
+          </span>
+          <span>
+            <kbd className="rounded border bg-white px-1">esc</kbd> close
+          </span>
+        </div>
       </div>
     </div>
   );

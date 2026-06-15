@@ -8,6 +8,7 @@ import { Avatar } from "@/components/Avatar";
 import { Loader } from "@/components/Loader";
 import { Select } from "@/components/Select";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { useMe, useProjectMembers, useRemoveProjectMember, useUpdateMemberRole } from "@/lib/api";
 import { roleLabel } from "@/lib/roles";
 
@@ -42,12 +43,16 @@ export function MemberTable({ projectId, canManage }: { projectId: string; canMa
             </div>
             {canManage ? (
               <div className="flex items-center gap-2">
-                <Select
-                  value={m.role}
-                  disabled={isSelf}
-                  onChange={(role) => updateRole.mutate({ userId: m.user_id, role })}
-                  options={ROLES.map((r) => ({ value: r, label: roleLabel(r) }))}
-                />
+                <Tooltip label={isSelf ? "You can't change your own role" : undefined}>
+                  <span className={isSelf ? "pointer-events-none" : undefined}>
+                    <Select
+                      value={m.role}
+                      disabled={isSelf}
+                      onChange={(role) => updateRole.mutate({ userId: m.user_id, role })}
+                      options={ROLES.map((r) => ({ value: r, label: roleLabel(r) }))}
+                    />
+                  </span>
+                </Tooltip>
                 {!isSelf && (
                   <button
                     onClick={() => setPendingRemove({ id: m.user_id, name: m.username })}

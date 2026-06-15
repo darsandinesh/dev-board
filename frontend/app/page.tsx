@@ -6,13 +6,14 @@ import { useMemo, useState } from "react";
 
 import { toast } from "sonner";
 
-import { LoaderScreen } from "@/components/Loader";
+import { GettingStarted } from "@/components/GettingStarted";
 import { Select } from "@/components/Select";
 import { Badge, ROLE_TONE } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
-import { useCreateProject, useOrgs, useProjects } from "@/lib/api";
+import { CardGridSkeleton } from "@/components/ui/Skeleton";
+import { useCreateProject, useMe, useOrgs, useProjects } from "@/lib/api";
 import { roleLabel } from "@/lib/roles";
 
 const ROLE_BAR: Record<string, string> = {
@@ -33,6 +34,7 @@ function StatChip({ label, value }: { label: string; value: number }) {
 export default function HomePage() {
   const { data: projects, isLoading } = useProjects();
   const { data: orgs } = useOrgs();
+  const { data: me } = useMe();
   const createProject = useCreateProject();
 
   const [name, setName] = useState("");
@@ -54,8 +56,7 @@ export default function HomePage() {
   const filtered = (projects ?? []).filter((p) =>
     p.name.toLowerCase().includes(query.toLowerCase()),
   );
-
-  if (isLoading) return <LoaderScreen message="Loading projects" />;
+  const noProjects = !isLoading && (projects ?? []).length === 0;
 
   return (
     <div className="space-y-6">
@@ -134,12 +135,15 @@ export default function HomePage() {
       </div>
 
       {/* Grid */}
-      {filtered.length === 0 ? (
-        <EmptyState icon={FolderKanban}>
-          {query
-            ? "No projects match your search."
-            : "No projects yet. Create one above to get started."}
-        </EmptyState>
+      {isLoading ? (
+        <CardGridSkeleton />
+      ) : noProjects ? (
+        <GettingStarted
+          isPlatformAdmin={!!me?.is_platform_admin}
+          hasAdminOrg={adminOrgs.length > 0}
+        />
+      ) : filtered.length === 0 ? (
+        <EmptyState icon={FolderKanban}>No projects match your search.</EmptyState>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((p) => {

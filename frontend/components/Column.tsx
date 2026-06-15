@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import type { Task, TaskStatus } from "@/lib/api";
 import { useDragStore } from "@/lib/store";
+import { InlineAddCard } from "./InlineAddCard";
 import { TaskCard } from "./TaskCard";
 
 const ACCENT: Record<TaskStatus, string> = {
@@ -20,6 +21,7 @@ export function Column({
   onDropTask,
   assignees = {},
   projectKey,
+  projectId,
 }: {
   status: TaskStatus;
   title: string;
@@ -28,6 +30,7 @@ export function Column({
   onDropTask: (taskId: string, status: TaskStatus) => void;
   assignees?: Record<string, string>;
   projectKey?: string | null;
+  projectId: string;
 }) {
   const draggingId = useDragStore((s) => s.draggingId);
   const [over, setOver] = useState(false);
@@ -67,6 +70,7 @@ export function Column({
           />
         ))}
       </div>
+      {canEdit && <InlineAddCard projectId={projectId} status={status} />}
     </div>
   );
 }

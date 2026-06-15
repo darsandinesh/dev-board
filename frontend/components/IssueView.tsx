@@ -9,6 +9,7 @@ import { AttachmentItem } from "@/components/AttachmentItem";
 import { Avatar } from "@/components/Avatar";
 import { LoaderScreen } from "@/components/Loader";
 import { Select } from "@/components/Select";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Tabs } from "@/components/ui/Tabs";
 import { LINK_LABELS, PRIORITIES, STATUSES, TYPES, TYPE_META } from "@/components/issueMeta";
 import {
@@ -102,6 +103,9 @@ export function IssueView({
   const [linkType, setLinkType] = useState<LinkType>("relates_to");
   const [preview, setPreview] = useState<string | null>(null);
   const [tab, setTab] = useState<"comments" | "history">("comments");
+  const [pendingDeleteAtt, setPendingDeleteAtt] = useState<{ id: string; name: string } | null>(
+    null,
+  );
 
   useEffect(() => {
     if (task) {
@@ -199,7 +203,7 @@ export function IssueView({
                     taskId={taskId}
                     att={a}
                     canDelete={!ro}
-                    onDelete={() => deleteAttachment.mutate(a.id)}
+                    onDelete={() => setPendingDeleteAtt({ id: a.id, name: a.filename })}
                     onPreview={setPreview}
                   />
                 ))}
@@ -542,6 +546,25 @@ export function IssueView({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="attachment" className="max-h-full max-w-full rounded-lg" />
         </div>
+      )}
+
+      {pendingDeleteAtt && (
+        <ConfirmDialog
+          title="Delete attachment?"
+          message={
+            <>
+              <span className="font-medium text-slate-700">{pendingDeleteAtt.name}</span> will be
+              permanently removed from this issue.
+            </>
+          }
+          pending={deleteAttachment.isPending}
+          onCancel={() => setPendingDeleteAtt(null)}
+          onConfirm={() =>
+            deleteAttachment.mutate(pendingDeleteAtt.id, {
+              onSuccess: () => setPendingDeleteAtt(null),
+            })
+          }
+        />
       )}
     </div>
   );

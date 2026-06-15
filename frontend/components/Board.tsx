@@ -15,12 +15,14 @@ export function Board({
   onMove,
   assignees = {},
   projectKey,
+  projectId,
 }: {
   tasks: Task[];
   canEdit: boolean;
   onMove: (taskId: string, status: TaskStatus) => void;
   assignees?: Record<string, string>;
   projectKey?: string | null;
+  projectId: string;
 }) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
@@ -33,6 +35,7 @@ export function Board({
           onDropTask={onMove}
           assignees={assignees}
           projectKey={projectKey}
+          projectId={projectId}
           tasks={tasks.filter((t) => t.status === c.status).sort((a, b) => a.position - b.position)}
         />
       ))}

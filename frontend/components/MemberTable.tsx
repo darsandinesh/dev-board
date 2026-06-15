@@ -1,10 +1,13 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 import { Avatar } from "@/components/Avatar";
 import { Loader } from "@/components/Loader";
 import { Select } from "@/components/Select";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useMe, useProjectMembers, useRemoveProjectMember, useUpdateMemberRole } from "@/lib/api";
 import { roleLabel } from "@/lib/roles";
 
@@ -15,6 +18,7 @@ export function MemberTable({ projectId, canManage }: { projectId: string; canMa
   const { data: members, isLoading } = useProjectMembers(projectId);
   const updateRole = useUpdateMemberRole(projectId);
   const removeMember = useRemoveProjectMember(projectId);
+  const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null);
 
   if (isLoading)
     return (
@@ -46,7 +50,7 @@ export function MemberTable({ projectId, canManage }: { projectId: string; canMa
                 />
                 {!isSelf && (
                   <button
-                    onClick={() => removeMember.mutate(m.user_id)}
+                    onClick={() => setPendingRemove({ id: m.user_id, name: m.username })}
                     title="Remove from project"
                     className="rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
                   >
@@ -62,6 +66,28 @@ export function MemberTable({ projectId, canManage }: { projectId: string; canMa
           </li>
         );
       })}
+      {pendingRemove && (
+        <ConfirmDialog
+          title="Remove member?"
+          message={
+            <>
+              <span className="font-medium text-slate-700">{pendingRemove.name}</span> will lose
+              access to this project. You can add them back later.
+            </>
+          }
+          confirmLabel="Remove"
+          pending={removeMember.isPending}
+          onCancel={() => setPendingRemove(null)}
+          onConfirm={() =>
+            removeMember.mutate(pendingRemove.id, {
+              onSuccess: () => {
+                toast.success("Member removed");
+                setPendingRemove(null);
+              },
+            })
+          }
+        />
+      )}
     </ul>
   );
 }

@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { TYPE_META } from "@/components/issueMeta";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import {
   useCreateSprint,
   useDeleteSprint,
@@ -40,12 +43,6 @@ function IssueRow({ task, projectKey }: { task: Task; projectKey?: string | null
   );
 }
 
-const STATE_BADGE: Record<string, string> = {
-  planned: "bg-slate-100 text-slate-600",
-  active: "bg-emerald-50 text-emerald-700",
-  completed: "bg-slate-100 text-slate-400",
-};
-
 export function Backlog({ projectId, canEdit }: { projectId: string; canEdit: boolean }) {
   const { data: project } = useProject(projectId);
   const { data: sprints } = useSprints(projectId);
@@ -71,15 +68,15 @@ export function Backlog({ projectId, canEdit }: { projectId: string; canEdit: bo
             createSprint.mutate({ name }, { onSuccess: () => setName("") });
           }}
         >
-          <input
+          <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="New sprint name…"
-            className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-500"
+            className="flex-1"
           />
-          <button className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+          <Button>
             <Plus className="h-4 w-4" /> Sprint
-          </button>
+          </Button>
         </form>
       )}
 
@@ -89,9 +86,7 @@ export function Backlog({ projectId, canEdit }: { projectId: string; canEdit: bo
           <section key={s.id} className="rounded-2xl border bg-white shadow-sm">
             <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
               <span className="font-semibold text-slate-800">{s.name}</span>
-              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATE_BADGE[s.state]}`}>
-                {s.state}
-              </span>
+              <Badge tone={s.state === "active" ? "emerald" : "slate"}>{s.state}</Badge>
               {s.goal && <span className="text-sm text-slate-400">· {s.goal}</span>}
               <span className="text-xs text-slate-400">
                 {issues.length} issues · {points(issues)} pts

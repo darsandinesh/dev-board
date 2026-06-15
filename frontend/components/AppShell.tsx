@@ -5,6 +5,7 @@ import { signIn, useSession } from "next-auth/react";
 import type { ReactNode } from "react";
 
 import { Avatar } from "./Avatar";
+import { DemoCredentials } from "./DemoCredentials";
 import { Loader } from "./Loader";
 import { NotificationBell } from "./NotificationBell";
 import { ProjectSwitcher } from "./ProjectSwitcher";
@@ -37,6 +38,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             Sign in with Keycloak
           </button>
+          <DemoCredentials />
         </div>
       </div>
     );

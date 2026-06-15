@@ -109,6 +109,24 @@ Config lives in [backend/pyproject.toml](./backend/pyproject.toml) (`[tool.ruff]
 [frontend/.prettierrc.json](./frontend/.prettierrc.json), and
 [.pre-commit-config.yaml](./.pre-commit-config.yaml).
 
+## Deploy (Kubernetes / Helm)
+
+An umbrella Helm chart deploys the whole stack — frontend, backend, Keycloak,
+OpenFGA, Postgres, Redis — to any cluster (kind/minikube/k3d). Every service is a
+local subchart, so each manifest is readable in one place.
+
+```bash
+docker build -t devboard-backend:latest ./backend
+docker build -t devboard-frontend:latest ./frontend
+kind load docker-image devboard-backend:latest devboard-frontend:latest
+
+helm install dev deploy/helm/devboard -n devboard --create-namespace \
+  --set secrets.nextauthSecret="$(openssl rand -base64 32)"
+```
+
+Full walkthrough (image build args, OpenFGA bootstrap, ingress, production notes)
+in [deploy/helm/README.md](./deploy/helm/README.md).
+
 ## Layout
 
 ```
@@ -116,6 +134,7 @@ backend/    FastAPI app — core/{auth,authz,cache,telemetry,logging}, models,
             schemas, routers, alembic/, tests/
 frontend/   Next.js app — app/, lib/{auth,api,store}, components/
 infra/      postgres init, keycloak realm export, openfga model + bootstrap
+deploy/     Helm umbrella chart (deploy/helm/devboard) for Kubernetes
 docs/       the design docs this build follows (00–10)
 ```
 

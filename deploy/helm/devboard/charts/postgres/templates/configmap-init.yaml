@@ -1,0 +1,15 @@
+# Runs once on first startup (mounted into /docker-entrypoint-initdb.d).
+# Creates the extra databases Keycloak and OpenFGA need; the app DB itself is
+# created by the POSTGRES_DB env var.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-postgres-init
+  labels:
+    {{- include "devboard.labels" . | nindent 4 }}
+data:
+  init-dbs.sql: |
+    CREATE DATABASE keycloak;
+    CREATE DATABASE openfga;
+    GRANT ALL PRIVILEGES ON DATABASE keycloak TO {{ .Values.global.postgres.user }};
+    GRANT ALL PRIVILEGES ON DATABASE openfga TO {{ .Values.global.postgres.user }};

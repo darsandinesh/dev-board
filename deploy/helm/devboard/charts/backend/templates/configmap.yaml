@@ -1,0 +1,16 @@
+# Non-secret backend config. The DB password is injected separately from the
+# shared Secret and assembled into DATABASE_URL at runtime (see deployment).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-backend-config
+  labels:
+    {{- include "devboard.labels" . | nindent 4 }}
+data:
+  REDIS_URL: redis://{{ .Release.Name }}-redis:6379
+  KEYCLOAK_URL: http://{{ .Release.Name }}-keycloak:8080
+  KEYCLOAK_REALM: {{ .Values.global.keycloak.realm | quote }}
+  KEYCLOAK_CLIENT_ID: {{ .Values.global.keycloak.clientId | quote }}
+  OPENFGA_API_URL: http://{{ .Release.Name }}-openfga:8082
+  OPENFGA_STORE_ID: {{ .Values.openfga.storeId | quote }}
+  OPENFGA_MODEL_ID: {{ .Values.openfga.modelId | quote }}

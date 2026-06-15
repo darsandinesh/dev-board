@@ -1,0 +1,75 @@
+# =============================================================================
+# DevBoard umbrella values.
+#
+# `global.*` is shared with every subchart (Helm injects it automatically).
+# Each top-level key (postgres:, backend:, ...) is passed to the matching
+# subchart. Service DNS names follow the pattern <release>-<component>, so a
+# release named "devboard" exposes postgres at "devboard-postgres", etc.
+# =============================================================================
+global:
+  # Prefix prepended to the app image names (e.g. "ghcr.io/you/"). Leave ""
+  # for images you've side-loaded into a local cluster (kind/minikube).
+  imageRegistry: ""
+  imagePullPolicy: IfNotPresent
+  # Keycloak realm/client are shared by backend (token validation) and
+  # frontend (OIDC login).
+  keycloak:
+    realm: devboard
+    clientId: devboard-app
+  postgres:
+    user: devboard
+    database: devboard
+  # Hostname the app is served on (used by the Ingress + NEXTAUTH_URL).
+  domain: devboard.local
+
+# Secrets rendered into one Kubernetes Secret (<release>-secrets). Override
+# every value in a real deployment — these match the local dev defaults.
+secrets:
+  postgresPassword: devboard
+  keycloakClientSecret: devboard-secret
+  # next-auth session encryption — generate with: openssl rand -base64 32
+  nextauthSecret: "CHANGE_ME_generate_with_openssl_rand_base64_32"
+
+ingress:
+  enabled: true
+  className: nginx
+  # host is taken from global.domain; "/" → frontend, "/api" → backend.
+
+# ---- subchart toggles + overrides ------------------------------------------
+postgres:
+  enabled: true
+  image: postgres:16-alpine
+  storage: 1Gi
+
+redis:
+  enabled: true
+  image: redis:7-alpine
+
+keycloak:
+  enabled: true
+  image: quay.io/keycloak/keycloak:24.0
+  adminUser: admin
+  adminPassword: admin
+
+openfga:
+  enabled: true
+  image: openfga/openfga:latest
+
+backend:
+  enabled: true
+  image:
+    repository: devboard-backend
+    tag: latest
+  replicas: 1
+  # OpenFGA store/model ids are produced by infra/openfga/bootstrap.sh. Set them
+  # here (or via --set) so the backend can talk to its authorization store.
+  openfga:
+    storeId: ""
+    modelId: ""
+
+frontend:
+  enabled: true
+  image:
+    repository: devboard-frontend
+    tag: latest
+  replicas: 1

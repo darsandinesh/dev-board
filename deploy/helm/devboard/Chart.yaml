@@ -1,0 +1,38 @@
+apiVersion: v2
+name: devboard
+description: |
+  Umbrella chart for DevBoard — a multi-tenant task manager that demonstrates
+  Keycloak (authn) + OpenFGA (ReBAC authz). Bundles every service as a local
+  subchart so the whole stack installs with one `helm install`.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+
+# Each service is a local subchart vendored under charts/. The `condition`
+# lets you switch any piece off from values.yaml (e.g. point at a managed
+# Postgres by setting postgres.enabled=false and overriding the host).
+dependencies:
+  - name: postgres
+    version: 0.1.0
+    repository: "file://charts/postgres"
+    condition: postgres.enabled
+  - name: redis
+    version: 0.1.0
+    repository: "file://charts/redis"
+    condition: redis.enabled
+  - name: keycloak
+    version: 0.1.0
+    repository: "file://charts/keycloak"
+    condition: keycloak.enabled
+  - name: openfga
+    version: 0.1.0
+    repository: "file://charts/openfga"
+    condition: openfga.enabled
+  - name: backend
+    version: 0.1.0
+    repository: "file://charts/backend"
+    condition: backend.enabled
+  - name: frontend
+    version: 0.1.0
+    repository: "file://charts/frontend"
+    condition: frontend.enabled

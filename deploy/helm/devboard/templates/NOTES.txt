@@ -1,0 +1,31 @@
+DevBoard "{{ .Release.Name }}" is installing into namespace "{{ .Release.Namespace }}".
+
+Services (cluster-internal DNS):
+  postgres  → {{ .Release.Name }}-postgres:5432
+  redis     → {{ .Release.Name }}-redis:6379
+  keycloak  → {{ .Release.Name }}-keycloak:8080
+  openfga   → {{ .Release.Name }}-openfga:8082
+  backend   → {{ .Release.Name }}-backend:8000
+  frontend  → {{ .Release.Name }}-frontend:3000
+
+1. Watch everything come up:
+     kubectl get pods -n {{ .Release.Namespace }} -w
+
+2. The backend runs Alembic migrations via a pre-install/upgrade Job
+   ({{ .Release.Name }}-backend-migrate). Check it with:
+     kubectl logs -n {{ .Release.Namespace }} job/{{ .Release.Name }}-backend-migrate
+
+{{- if .Values.ingress.enabled }}
+3. Reach the app at http://{{ .Values.global.domain }}
+   (map it to your ingress controller IP in /etc/hosts).
+{{- else }}
+3. Ingress is disabled — port-forward instead:
+     kubectl port-forward -n {{ .Release.Namespace }} svc/{{ .Release.Name }}-frontend 3001:3000
+{{- end }}
+
+{{- if not .Values.backend.openfga.storeId }}
+
+WARNING: backend.openfga.storeId / modelId are empty. Run
+infra/openfga/bootstrap.sh against the in-cluster OpenFGA, then
+`helm upgrade` with --set backend.openfga.storeId=... --set backend.openfga.modelId=...
+{{- end }}

@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-frontend
+  labels:
+    {{- include "devboard.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: frontend
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: frontend
+          image: "{{ .Values.global.imageRegistry }}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: 3000
+          env:
+            # --- server-side (next-auth, read at runtime) ---
+            - name: NEXTAUTH_URL
+              value: http://{{ .Values.global.domain }}
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "devboard.secretName" . }}
+                  key: NEXTAUTH_SECRET
+            - name: KEYCLOAK_CLIENT_ID
+              value: {{ .Values.global.keycloak.clientId | quote }}
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "devboard.secretName" . }}
+                  key: KEYCLOAK_CLIENT_SECRET
+            # Server-to-Keycloak token exchange uses the in-cluster address.
+            - name: KEYCLOAK_ISSUER
+              value: http://{{ .Release.Name }}-keycloak:8080/realms/{{ .Values.global.keycloak.realm }}
+            # --- NEXT_PUBLIC_* are inlined at BUILD time (see frontend/Dockerfile
+            #     build args); set here only for clarity/runtime server reads ---
+            - name: NEXT_PUBLIC_API_URL
+              value: http://{{ .Values.global.domain }}/api
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10

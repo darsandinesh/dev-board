@@ -1,0 +1,6 @@
+apiVersion: v2
+name: openfga
+description: OpenFGA (Zanzibar-style ReBAC) authorization server for DevBoard.
+type: application
+version: 0.1.0
+appVersion: "latest"

@@ -37,7 +37,7 @@ export function InlineAddCard({ projectId, status }: { projectId: string; status
     return (
       <button
         onClick={() => setOpen(true)}
-        className="mt-1 flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-slate-400 transition hover:bg-white hover:text-slate-600"
+        className="mt-1 flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-slate-400 transition hover:bg-white hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
       >
         <Plus className="h-4 w-4" /> Add issue
       </button>
@@ -61,7 +61,7 @@ export function InlineAddCard({ projectId, status }: { projectId: string; status
         }
       }}
       placeholder="What needs to be done?"
-      className="mt-1 w-full resize-none rounded-lg border border-indigo-300 bg-white px-2.5 py-2 text-sm shadow-sm outline-none ring-2 ring-indigo-100"
+      className="mt-1 w-full resize-none rounded-lg border border-indigo-300 bg-white px-2.5 py-2 text-sm text-slate-800 shadow-sm outline-none ring-2 ring-indigo-100 dark:border-indigo-500 dark:bg-slate-800 dark:text-slate-100 dark:ring-indigo-900/50"
     />
   );
 }

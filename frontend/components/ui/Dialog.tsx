@@ -22,13 +22,19 @@ export function Dialog({
       onClick={onClose}
     >
       <div
-        className={cn("w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-2xl", className)}
+        className={cn(
+          "w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-slate-900",
+          className,
+        )}
         onClick={(e) => e.stopPropagation()}
       >
         {title !== undefined && (
           <div className="flex items-center justify-between border-b px-5 py-3">
-            <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-            <button onClick={onClose} className="rounded p-1 text-slate-400 hover:bg-slate-100">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+            <button
+              onClick={onClose}
+              className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>

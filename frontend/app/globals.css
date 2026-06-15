@@ -6,6 +6,20 @@ body {
   @apply bg-slate-50 text-slate-900;
 }
 
+.dark body {
+  @apply bg-slate-950 text-slate-100;
+}
+
+/*
+ * Flip the *default* border color (Tailwind's bare `border`/`border-t`/divides)
+ * to a dark slate in dark mode. `:where()` keeps this at zero specificity, so
+ * any explicit border-color utility (border-red-200, dark:border-slate-700)
+ * still wins. Saves annotating every neutral divider in the app.
+ */
+.dark :where(*, ::before, ::after) {
+  border-color: rgb(30 41 59); /* slate-800 */
+}
+
 /* --- custom kanban loader --------------------------------------------- */
 @keyframes kanbanWave {
   0%,

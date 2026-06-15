@@ -30,7 +30,7 @@ export function AddMemberSearch({
   const candidates = (results ?? []).filter((u) => !excludeIds.includes(u.id));
 
   return (
-    <div className="rounded-xl border bg-slate-50 p-4">
+    <div className="rounded-xl border bg-slate-50 p-4 dark:bg-slate-800/50">
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -38,7 +38,7 @@ export function AddMemberSearch({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search users by name or email…"
-            className="w-full rounded-lg border bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            className="w-full rounded-lg border bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:bg-slate-900 dark:text-slate-100"
           />
         </div>
         <Select
@@ -49,7 +49,7 @@ export function AddMemberSearch({
       </div>
 
       {query && (
-        <ul className="mt-3 max-h-56 divide-y overflow-auto rounded-lg border bg-white">
+        <ul className="mt-3 max-h-56 divide-y overflow-auto rounded-lg border bg-white dark:bg-slate-900">
           {candidates.length === 0 ? (
             <li className="px-3 py-3 text-sm text-slate-400">No matching users.</li>
           ) : (
@@ -58,7 +58,9 @@ export function AddMemberSearch({
                 <div className="flex items-center gap-2">
                   <Avatar name={u.username} size={28} />
                   <div className="leading-tight">
-                    <div className="text-sm font-medium text-slate-700">{u.username}</div>
+                    <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      {u.username}
+                    </div>
                     <div className="text-xs text-slate-400">{u.email}</div>
                   </div>
                 </div>

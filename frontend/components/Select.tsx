@@ -66,9 +66,9 @@ export function Select({
         ref={btnRef}
         disabled={disabled}
         onClick={toggle}
-        className={`flex items-center justify-between gap-2 rounded-lg border bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-indigo-500 disabled:cursor-default disabled:bg-slate-50 disabled:text-slate-500 ${className}`}
+        className={`flex items-center justify-between gap-2 rounded-lg border bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-indigo-500 disabled:cursor-default disabled:bg-slate-50 disabled:text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:disabled:bg-slate-800/50 ${className}`}
       >
-        <span className={`truncate ${selected ? "" : "text-slate-400"}`}>
+        <span className={`truncate ${selected ? "" : "text-slate-400 dark:text-slate-500"}`}>
           {selected ? selected.label : placeholder}
         </span>
         <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
@@ -81,7 +81,7 @@ export function Select({
           <>
             <div className="fixed inset-0 z-[70]" onClick={() => setOpen(false)} />
             <ul
-              className="fixed z-[71] max-h-64 overflow-auto rounded-lg border bg-white py-1 shadow-lg"
+              className="fixed z-[71] max-h-64 overflow-auto rounded-lg border bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800"
               style={{
                 top: rect.bottom + 4,
                 left: rect.left,
@@ -96,8 +96,10 @@ export function Select({
                       onChange(o.value);
                       setOpen(false);
                     }}
-                    className={`flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left text-sm hover:bg-slate-50 ${
-                      o.value === value ? "font-medium text-indigo-700" : "text-slate-700"
+                    className={`flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 ${
+                      o.value === value
+                        ? "font-medium text-indigo-700 dark:text-indigo-400"
+                        : "text-slate-700 dark:text-slate-200"
                     }`}
                   >
                     <span className="truncate">{o.label}</span>

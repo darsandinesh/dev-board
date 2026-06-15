@@ -5,6 +5,8 @@ import { SessionProvider } from "next-auth/react";
 import { useState, type ReactNode } from "react";
 import { Toaster, toast } from "sonner";
 
+import { useThemeEffect, useThemeStore } from "@/lib/theme";
+
 function errorMessage(err: unknown): string {
   if (err && typeof err === "object" && "detail" in err) {
     const d = (err as { detail: unknown }).detail;
@@ -15,6 +17,8 @@ function errorMessage(err: unknown): string {
 }
 
 export function Providers({ children }: { children: ReactNode }) {
+  useThemeEffect();
+  const theme = useThemeStore((s) => s.theme);
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -29,7 +33,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
         {children}
-        <Toaster richColors position="top-right" closeButton />
+        <Toaster richColors position="top-right" closeButton theme={theme} />
       </QueryClientProvider>
     </SessionProvider>
   );

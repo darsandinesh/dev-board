@@ -110,7 +110,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg overflow-hidden rounded-2xl border bg-white shadow-2xl"
+        className="w-full max-w-lg overflow-hidden rounded-2xl border bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={onKeyDown}
       >
@@ -121,16 +121,18 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search projects and pages…"
-            className="w-full bg-transparent py-3.5 text-sm outline-none placeholder:text-slate-400"
+            className="w-full bg-transparent py-3.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
           />
-          <kbd className="rounded border bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-400">
+          <kbd className="rounded border bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-400 dark:bg-slate-800">
             esc
           </kbd>
         </div>
 
         <ul className="max-h-80 overflow-auto p-2">
           {items.length === 0 && (
-            <li className="px-3 py-6 text-center text-sm text-slate-400">No matches.</li>
+            <li className="px-3 py-6 text-center text-sm text-slate-400 dark:text-slate-500">
+              No matches.
+            </li>
           )}
           {items.map((it, i) => {
             const Icon = it.icon;
@@ -141,7 +143,9 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                   onClick={it.run}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm",
-                    i === active ? "bg-indigo-50 text-indigo-700" : "text-slate-700",
+                    i === active
+                      ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
+                      : "text-slate-700 dark:text-slate-200",
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0 text-slate-400" />
@@ -153,7 +157,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
           })}
         </ul>
 
-        <div className="flex items-center gap-4 border-t bg-slate-50 px-4 py-2 text-[11px] text-slate-400">
+        <div className="flex items-center gap-4 border-t bg-slate-50 px-4 py-2 text-[11px] text-slate-400 dark:bg-slate-800/50">
           <span>
             <kbd className="rounded border bg-white px-1">↑</kbd>{" "}
             <kbd className="rounded border bg-white px-1">↓</kbd> navigate

@@ -28,14 +28,14 @@ function IssueRow({ task, projectKey }: { task: Task; projectKey?: string | null
   return (
     <button
       onClick={() => router.push(`/projects/${task.project_id}/issues/${task.id}`)}
-      className="flex w-full items-center gap-2 border-t px-3 py-2 text-left text-sm first:border-t-0 hover:bg-slate-50"
+      className="flex w-full items-center gap-2 border-t px-3 py-2 text-left text-sm first:border-t-0 hover:bg-slate-50 dark:hover:bg-slate-800"
     >
       <Type.icon className={`h-4 w-4 shrink-0 ${Type.color}`} />
       <span className="font-mono text-xs text-slate-400">
         {projectKey && task.seq != null ? `${projectKey}-${task.seq}` : ""}
       </span>
-      <span className="flex-1 truncate text-slate-700">{task.title}</span>
-      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+      <span className="flex-1 truncate text-slate-700 dark:text-slate-200">{task.title}</span>
+      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
         {task.status}
       </span>
       {task.story_points != null && (
@@ -87,9 +87,9 @@ export function Backlog({ projectId, canEdit }: { projectId: string; canEdit: bo
       {sprints?.map((s) => {
         const issues = inSprint(s.id);
         return (
-          <section key={s.id} className="rounded-2xl border bg-white shadow-sm">
+          <section key={s.id} className="rounded-2xl border bg-white shadow-sm dark:bg-slate-900">
             <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
-              <span className="font-semibold text-slate-800">{s.name}</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-100">{s.name}</span>
               <Badge tone={s.state === "active" ? "emerald" : "slate"}>{s.state}</Badge>
               {s.goal && <span className="text-sm text-slate-400">· {s.goal}</span>}
               <span className="text-xs text-slate-400">
@@ -137,10 +137,10 @@ export function Backlog({ projectId, canEdit }: { projectId: string; canEdit: bo
       })}
 
       {/* Backlog */}
-      <section className="rounded-2xl border bg-white shadow-sm">
+      <section className="rounded-2xl border bg-white shadow-sm dark:bg-slate-900">
         <div className="flex items-center gap-2 border-b px-4 py-3">
           <ChevronRight className="h-4 w-4 text-slate-400" />
-          <span className="font-semibold text-slate-800">Backlog</span>
+          <span className="font-semibold text-slate-800 dark:text-slate-100">Backlog</span>
           <span className="text-xs text-slate-400">
             {backlog.length} issues · {points(backlog)} pts
           </span>
@@ -157,8 +157,10 @@ export function Backlog({ projectId, canEdit }: { projectId: string; canEdit: bo
           title="Delete sprint?"
           message={
             <>
-              <span className="font-medium text-slate-700">{pendingDelete.name}</span> will be
-              deleted. Its issues stay in the project and move back to the backlog.
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {pendingDelete.name}
+              </span>{" "}
+              will be deleted. Its issues stay in the project and move back to the backlog.
             </>
           }
           pending={deleteSprint.isPending}

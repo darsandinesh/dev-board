@@ -12,9 +12,9 @@ const GENERIC = "bg-indigo-500";
 
 function Stat({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="rounded-2xl border bg-white p-5 shadow-sm">
-      <div className="text-3xl font-bold text-slate-900">{value}</div>
-      <div className="mt-1 text-sm text-slate-500">{label}</div>
+    <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900">
+      <div className="text-3xl font-bold text-slate-900 dark:text-slate-100">{value}</div>
+      <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{label}</div>
       {sub && <div className="text-xs text-slate-400">{sub}</div>}
     </div>
   );
@@ -33,8 +33,8 @@ function BarList({
 }) {
   const entries = Object.entries(data).sort((a, b) => b[1] - a[1]);
   return (
-    <div className="rounded-2xl border bg-white p-5 shadow-sm">
-      <h3 className="mb-3 text-sm font-semibold text-slate-700">{title}</h3>
+    <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900">
+      <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</h3>
       {entries.length === 0 ? (
         <p className="text-sm text-slate-400">No data.</p>
       ) : (
@@ -45,7 +45,7 @@ function BarList({
                 <span className="capitalize">{k.replace("_", " ")}</span>
                 <span>{v}</span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div
                   className={`h-full rounded-full ${colorFor ? colorFor(k) : GENERIC}`}
                   style={{ width: `${total ? (v / total) * 100 : 0}%` }}
@@ -89,7 +89,7 @@ export function Reports({ projectId }: { projectId: string }) {
       <BarList title="Workload by assignee" data={r.by_assignee} total={r.total} />
 
       {r.active_sprints.length > 0 && (
-        <div className="rounded-2xl border bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900">
           <h3 className="mb-3 text-sm font-semibold text-slate-700">Active sprints</h3>
           <ul className="space-y-3">
             {r.active_sprints.map((s) => {
@@ -97,12 +97,12 @@ export function Reports({ projectId }: { projectId: string }) {
               return (
                 <li key={s.id}>
                   <div className="mb-1 flex justify-between text-sm">
-                    <span className="font-medium text-slate-700">{s.name}</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-200">{s.name}</span>
                     <span className="text-slate-400">
                       {s.done}/{s.total} done · {s.points_done}/{s.points} pts
                     </span>
                   </div>
-                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                     <div
                       className="h-full rounded-full bg-emerald-500"
                       style={{ width: `${pct}%` }}

@@ -48,14 +48,14 @@ export function Column({
         setOver(false);
         if (canEdit && draggingId) onDropTask(draggingId, status);
       }}
-      className={`flex w-full flex-col rounded-2xl border bg-slate-100/70 p-3 transition ${
+      className={`flex w-full flex-col rounded-2xl border bg-slate-100/70 p-3 transition dark:bg-slate-900/50 ${
         over ? "ring-2 ring-indigo-400" : ""
       }`}
     >
-      <h2 className="mb-3 flex items-center gap-2 px-1 text-sm font-semibold text-slate-600">
+      <h2 className="mb-3 flex items-center gap-2 px-1 text-sm font-semibold text-slate-600 dark:text-slate-300">
         <span className={`h-2 w-2 rounded-full ${ACCENT[status]}`} />
         {title}
-        <span className="ml-auto rounded-full bg-white px-2 text-xs text-slate-400">
+        <span className="ml-auto rounded-full bg-white px-2 text-xs text-slate-400 dark:bg-slate-800 dark:text-slate-400">
           {tasks.length}
         </span>
       </h2>

@@ -70,20 +70,22 @@ export default function ProjectBoardPage() {
       <div>
         <Link
           href="/"
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
+          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
         >
           <ArrowLeft className="h-4 w-4" /> Projects
         </Link>
         <div className="mt-2 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">{project?.name ?? "Project"}</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              {project?.name ?? "Project"}
+            </h1>
             {project?.description && (
-              <p className="text-sm text-slate-500">{project.description}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{project.description}</p>
             )}
           </div>
           <div className="flex items-center gap-2">
             {!perms?.can_edit && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                 <Eye className="h-3.5 w-3.5" /> Read-only
               </span>
             )}
@@ -171,7 +173,7 @@ export default function ProjectBoardPage() {
                   setPrioF("");
                   setAssigneeF("");
                 }}
-                className="text-xs text-slate-500 hover:text-slate-800"
+                className="text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
               >
                 Clear
               </button>

@@ -22,8 +22,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   }
 
-  // Unauthenticated → full-screen sign-in.
-  if (!session) {
+  // Unauthenticated (or a session whose token refresh failed) → show our own
+  // sign-in screen rather than letting an expired token bounce to Keycloak.
+  if (!session || session.error) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
         <div className="w-full max-w-sm rounded-2xl border bg-white p-8 text-center shadow-sm">
@@ -59,7 +60,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
         <main className="flex-1 overflow-auto p-6">
-          <div className="mx-auto max-w-6xl animate-fade-in">{children}</div>
+          <div className="animate-fade-in mx-auto max-w-6xl">{children}</div>
         </main>
       </div>
     </div>

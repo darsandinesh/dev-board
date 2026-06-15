@@ -42,8 +42,11 @@ async def create_sprint(body: SprintCreate, user: DBUser, db: Db):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Project not found")
     await _require(user, body.project_id, "editor")
     sprint = Sprint(
-        project_id=body.project_id, name=body.name, goal=body.goal,
-        start_date=body.start_date, end_date=body.end_date,
+        project_id=body.project_id,
+        name=body.name,
+        goal=body.goal,
+        start_date=body.start_date,
+        end_date=body.end_date,
     )
     db.add(sprint)
     await db.flush()

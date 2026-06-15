@@ -10,12 +10,8 @@ import { roleLabel } from "@/lib/roles";
 function Field({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div>
-      <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
-        {label}
-      </dt>
-      <dd
-        className={`mt-0.5 break-all text-sm text-slate-700 ${mono ? "font-mono" : ""}`}
-      >
+      <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</dt>
+      <dd className={`mt-0.5 break-all text-sm text-slate-700 ${mono ? "font-mono" : ""}`}>
         {value || <span className="text-slate-300">—</span>}
       </dd>
     </div>
@@ -43,8 +39,7 @@ export default function ProfilePage() {
 
   if (isLoading || !me) return <LoaderScreen message="Loading profile" />;
 
-  const fullName =
-    [me.given_name, me.family_name].filter(Boolean).join(" ") || me.username;
+  const fullName = [me.given_name, me.family_name].filter(Boolean).join(" ") || me.username;
 
   return (
     <div className="space-y-6">
@@ -147,9 +142,7 @@ export default function ProfilePage() {
             ))}
           </ul>
         ) : (
-          <p className="mt-3 text-sm text-slate-500">
-            You’re not a member of any project yet.
-          </p>
+          <p className="mt-3 text-sm text-slate-500">You’re not a member of any project yet.</p>
         )}
       </section>
     </div>

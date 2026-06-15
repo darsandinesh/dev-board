@@ -28,10 +28,7 @@ async def _write(user: str, relation: str, obj: str) -> None:
 
 async def main() -> None:
     async with AsyncSessionLocal() as db:
-        subs = {
-            u.id: u.keycloak_sub
-            for u in (await db.execute(select(User))).scalars().all()
-        }
+        subs = {u.id: u.keycloak_sub for u in (await db.execute(select(User))).scalars().all()}
 
         print("orgs + org members…")
         for org in (await db.execute(select(Org))).scalars().all():

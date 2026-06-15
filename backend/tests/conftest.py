@@ -21,9 +21,7 @@ from pathlib import Path
 #  - run the suite against a DEDICATED database so tests never touch dev data
 #    (the per-test TRUNCATE below would otherwise wipe the running app's data),
 #  - disable the noisy console span exporter.
-os.environ["DATABASE_URL"] = (
-    "postgresql+asyncpg://devboard:devboard@localhost:5433/devboard_test"
-)
+os.environ["DATABASE_URL"] = "postgresql+asyncpg://devboard:devboard@localhost:5433/devboard_test"
 os.environ["ENABLE_TELEMETRY"] = "false"
 
 # CRITICAL: tests get their OWN OpenFGA store. The per-test tuple cleanup wipes
@@ -33,9 +31,20 @@ _OPENFGA_URL = os.environ.get("OPENFGA_API_URL", "http://localhost:8082")
 _MODEL_FILE = Path(__file__).resolve().parents[2] / "infra" / "openfga" / "model.fga"
 _created = json.loads(
     subprocess.run(
-        ["fga", "--api-url", _OPENFGA_URL, "store", "create",
-         "--name", "devboard-pytest", "--model", str(_MODEL_FILE)],
-        capture_output=True, text=True, check=True,
+        [
+            "fga",
+            "--api-url",
+            _OPENFGA_URL,
+            "store",
+            "create",
+            "--name",
+            "devboard-pytest",
+            "--model",
+            str(_MODEL_FILE),
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
     ).stdout
 )
 os.environ["OPENFGA_API_URL"] = _OPENFGA_URL
@@ -45,12 +54,12 @@ os.environ["OPENFGA_MODEL_ID"] = _created["model"]["authorization_model_id"]
 import httpx
 import pytest
 import pytest_asyncio
-from sqlalchemy import text
-
 from openfga_sdk import ClientConfiguration, OpenFgaClient
 from openfga_sdk.client.models import ClientTuple, ClientWriteRequest
+from sqlalchemy import text
 
-from app.core import auth, authz as authz_mod
+from app.core import auth
+from app.core import authz as authz_mod
 from app.core.cache import redis_client
 from app.core.config import settings
 from app.db.base import Base
@@ -87,6 +96,7 @@ async def _clear_openfga_tuples():
             if not token:
                 break
 
+
 # Safety net: refuse to run if we somehow aren't pointed at the test DB.
 assert engine.url.database == "devboard_test", (
     f"tests must run against devboard_test, got {engine.url.database!r}"
@@ -97,8 +107,10 @@ assert engine.url.database == "devboard_test", (
 @pytest.fixture(autouse=True)
 def _mock_jwks(monkeypatch):
     """Point JWKS verification at our test public key (no Keycloak needed)."""
+
     async def fake_get_jwks():
         return test_jwks()
+
     monkeypatch.setattr(auth, "_get_jwks", fake_get_jwks)
 
 
@@ -106,6 +118,7 @@ def _mock_jwks(monkeypatch):
 async def _create_schema():
     """Create the schema in the test DB once per session (drop+recreate)."""
     import app.models  # noqa: F401 — populate Base.metadata
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
@@ -117,9 +130,9 @@ async def _clean_state():
     """Full isolation per test: wipe Postgres rows, Redis cache, OpenFGA tuples,
     and the platform-admin sync cache (so platform tuples are re-written)."""
     async with engine.begin() as conn:
-        await conn.execute(text(
-            "TRUNCATE tasks, project_members, projects, org_members, orgs, users CASCADE"
-        ))
+        await conn.execute(
+            text("TRUNCATE tasks, project_members, projects, org_members, orgs, users CASCADE")
+        )
     await redis_client.flushdb()
     await _clear_openfga_tuples()
     authz_mod._synced_platform_admins.clear()
@@ -160,25 +173,31 @@ class Seeder:
 
     async def add_org_member(self, org_id: str, admin: str, user: str, role: str):
         uid = await self.provision(user)
-        r = await self.c.post(f"/orgs/{org_id}/members", headers=bearer(admin),
-                              json={"user_id": uid, "role": role})
+        r = await self.c.post(
+            f"/orgs/{org_id}/members", headers=bearer(admin), json={"user_id": uid, "role": role}
+        )
         r.raise_for_status()
 
     async def project(self, org_id: str, owner: str) -> str:
         await self.provision(owner)
-        r = await self.c.post("/projects", headers=bearer(owner),
-                              json={"org_id": org_id, "name": "Web"})
+        r = await self.c.post(
+            "/projects", headers=bearer(owner), json={"org_id": org_id, "name": "Web"}
+        )
         r.raise_for_status()
         return r.json()["id"]
 
     async def add_project_member(self, project_id: str, owner: str, user: str, role: str):
         uid = await self.provision(user)
-        r = await self.c.post(f"/projects/{project_id}/members", headers=bearer(owner),
-                              json={"user_id": uid, "role": role})
+        r = await self.c.post(
+            f"/projects/{project_id}/members",
+            headers=bearer(owner),
+            json={"user_id": uid, "role": role},
+        )
         r.raise_for_status()
 
     async def task(self, project_id: str, editor: str, title: str = "X") -> str:
-        r = await self.c.post("/tasks", headers=bearer(editor),
-                              json={"project_id": project_id, "title": title})
+        r = await self.c.post(
+            "/tasks", headers=bearer(editor), json={"project_id": project_id, "title": title}
+        )
         r.raise_for_status()
         return r.json()["id"]

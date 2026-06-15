@@ -54,8 +54,7 @@ export function Backlog({ projectId, canEdit }: { projectId: string; canEdit: bo
 
   const inSprint = (sid: string) => (tasks ?? []).filter((t) => t.sprint_id === sid);
   const backlog = (tasks ?? []).filter((t) => !t.sprint_id);
-  const points = (list: Task[]) =>
-    list.reduce((n, t) => n + (t.story_points ?? 0), 0);
+  const points = (list: Task[]) => list.reduce((n, t) => n + (t.story_points ?? 0), 0);
 
   return (
     <div className="space-y-4">
@@ -103,7 +102,9 @@ export function Backlog({ projectId, canEdit }: { projectId: string; canEdit: bo
                   )}
                   {s.state === "active" && (
                     <button
-                      onClick={() => updateSprint.mutate({ id: s.id, patch: { state: "completed" } })}
+                      onClick={() =>
+                        updateSprint.mutate({ id: s.id, patch: { state: "completed" } })
+                      }
                       className="inline-flex items-center gap-1 rounded-lg bg-slate-700 px-2.5 py-1 text-xs font-medium text-white hover:bg-slate-800"
                     >
                       <Square className="h-3 w-3" /> Complete

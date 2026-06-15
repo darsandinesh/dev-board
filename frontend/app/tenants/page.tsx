@@ -10,13 +10,7 @@ import { LoaderScreen } from "@/components/Loader";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input, Label } from "@/components/ui/Input";
-import {
-  useCreateOrg,
-  useMe,
-  useOrgs,
-  useUserSearch,
-  type UserResult,
-} from "@/lib/api";
+import { useCreateOrg, useMe, useOrgs, useUserSearch, type UserResult } from "@/lib/api";
 
 export default function TenantsPage() {
   const { data: me, isLoading } = useMe();
@@ -46,8 +40,8 @@ export default function TenantsPage() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Tenants</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Provision organizations and assign their first tenant-admin. Each new
-          tenant gets a default “General” project.
+          Provision organizations and assign their first tenant-admin. Each new tenant gets a
+          default “General” project.
         </p>
       </div>
 
@@ -76,7 +70,11 @@ export default function TenantsPage() {
         >
           <div>
             <Label>Tenant name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Acme Corp" />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Acme Corp"
+            />
           </div>
 
           <div>
@@ -84,8 +82,7 @@ export default function TenantsPage() {
             {admin ? (
               <div className="flex items-center justify-between rounded-lg border bg-slate-50 px-3 py-2 text-sm">
                 <span className="font-medium text-slate-700">
-                  {admin.username}{" "}
-                  <span className="text-slate-400">({admin.email})</span>
+                  {admin.username} <span className="text-slate-400">({admin.email})</span>
                 </span>
                 <button
                   type="button"

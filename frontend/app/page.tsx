@@ -65,8 +65,8 @@ export default function HomePage() {
           <div>
             <h1 className="text-2xl font-bold">Projects</h1>
             <p className="mt-1 max-w-md text-sm text-indigo-100">
-              Boards you own or can see through your organizations. Access is
-              resolved live by OpenFGA.
+              Boards you own or can see through your organizations. Access is resolved live by
+              OpenFGA.
             </p>
           </div>
           <div className="flex gap-3">
@@ -91,8 +91,8 @@ export default function HomePage() {
 
         {adminOrgs.length === 0 ? (
           <p className="text-sm text-slate-500">
-            You need to be an admin of an organization to add projects. Tenants
-            are provisioned from the{" "}
+            You need to be an admin of an organization to add projects. Tenants are provisioned from
+            the{" "}
             <Link href="/tenants" className="text-indigo-600 hover:underline">
               Tenants
             </Link>{" "}

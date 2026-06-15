@@ -74,7 +74,9 @@ export function Select({
         <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
       </button>
 
-      {mounted && open && rect &&
+      {mounted &&
+        open &&
+        rect &&
         createPortal(
           <>
             <div className="fixed inset-0 z-[70]" onClick={() => setOpen(false)} />

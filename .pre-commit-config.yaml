@@ -1,0 +1,52 @@
+# Pre-commit hooks for DevBoard (backend = Python/ruff, frontend = Next/ESLint+Prettier).
+# Install once with:  backend/.venv/bin/pre-commit install
+# Run on everything:  backend/.venv/bin/pre-commit run --all-files
+exclude: '^(frontend/(\.next|node_modules)/|backend/\.venv/|frontend/package-lock\.json)'
+
+repos:
+  # ---- generic hygiene ------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=2048"]
+
+  # ---- backend: ruff (lint + format) ---------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.17
+    hooks:
+      - id: ruff
+        name: ruff (backend lint)
+        args: [--fix]
+        files: ^backend/
+      - id: ruff-format
+        name: ruff (backend format)
+        files: ^backend/
+
+  # ---- frontend: ESLint + Prettier + typecheck -----------------------------
+  # Run via the project's own npm scripts so they use the installed toolchain.
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier (frontend format)
+        entry: npm --prefix frontend run format
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js|jsx|json|css|md)$
+        pass_filenames: false
+      - id: eslint
+        name: eslint (frontend lint)
+        entry: npm --prefix frontend run lint
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false
+      - id: tsc
+        name: typescript (frontend typecheck)
+        entry: npm --prefix frontend run typecheck
+        language: system
+        files: ^frontend/.*\.(ts|tsx)$
+        pass_filenames: false

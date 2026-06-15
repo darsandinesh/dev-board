@@ -33,8 +33,8 @@ export default function SettingsPage() {
           </div>
         </dl>
         <p className="mt-4 text-xs text-slate-400">
-          Identity is managed by Keycloak. To change your name or password, update
-          it in the Keycloak account console.
+          Identity is managed by Keycloak. To change your name or password, update it in the
+          Keycloak account console.
         </p>
       </section>
 

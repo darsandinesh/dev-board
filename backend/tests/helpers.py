@@ -38,10 +38,16 @@ def _b64url_uint(n: int) -> str:
 def test_jwks() -> dict:
     nums = _private_key.public_key().public_numbers()
     return {
-        "keys": [{
-            "kty": "RSA", "kid": TEST_KID, "use": "sig", "alg": "RS256",
-            "n": _b64url_uint(nums.n), "e": _b64url_uint(nums.e),
-        }]
+        "keys": [
+            {
+                "kty": "RSA",
+                "kid": TEST_KID,
+                "use": "sig",
+                "alg": "RS256",
+                "n": _b64url_uint(nums.n),
+                "e": _b64url_uint(nums.e),
+            }
+        ]
     }
 
 

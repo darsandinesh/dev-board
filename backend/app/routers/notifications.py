@@ -33,9 +33,14 @@ async def my_notifications(user: DBUser, db: Db, limit: int = 50):
     )
     return [
         NotificationOut(
-            id=n.id, kind=n.kind, message=n.message, task_id=n.task_id,
-            project_id=project_id, actor_username=username,
-            is_read=n.is_read, created_at=n.created_at,
+            id=n.id,
+            kind=n.kind,
+            message=n.message,
+            task_id=n.task_id,
+            project_id=project_id,
+            actor_username=username,
+            is_read=n.is_read,
+            created_at=n.created_at,
         )
         for n, username, project_id in rows.all()
     ]

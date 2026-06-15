@@ -76,7 +76,12 @@ export function Reports({ projectId }: { projectId: string }) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <BarList title="By status" data={r.by_status} total={r.total} colorFor={(k) => STATUS_COLOR[k] ?? GENERIC} />
+        <BarList
+          title="By status"
+          data={r.by_status}
+          total={r.total}
+          colorFor={(k) => STATUS_COLOR[k] ?? GENERIC}
+        />
         <BarList title="By type" data={r.by_type} total={r.total} />
         <BarList title="By priority" data={r.by_priority} total={r.total} />
       </div>
@@ -98,7 +103,10 @@ export function Reports({ projectId }: { projectId: string }) {
                     </span>
                   </div>
                   <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
+                    <div
+                      className="h-full rounded-full bg-emerald-500"
+                      style={{ width: `${pct}%` }}
+                    />
                   </div>
                 </li>
               );

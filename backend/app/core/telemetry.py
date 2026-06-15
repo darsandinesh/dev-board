@@ -25,6 +25,7 @@ def setup_telemetry(app, engine) -> None:
         return
 
     from app.core.config import settings
+
     if not settings.enable_telemetry:
         return
 

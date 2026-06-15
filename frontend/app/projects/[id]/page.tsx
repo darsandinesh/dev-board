@@ -48,8 +48,7 @@ export default function ProjectBoardPage() {
       (!query || t.title.toLowerCase().includes(query.toLowerCase())) &&
       (!typeF || t.type === typeF) &&
       (!prioF || t.priority === prioF) &&
-      (!assigneeF ||
-        (assigneeF === "none" ? !t.assignee_id : t.assignee_id === assigneeF)),
+      (!assigneeF || (assigneeF === "none" ? !t.assignee_id : t.assignee_id === assigneeF)),
   );
 
   const move = (taskId: string, status: TaskStatus) =>
@@ -77,9 +76,7 @@ export default function ProjectBoardPage() {
         </Link>
         <div className="mt-2 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              {project?.name ?? "Project"}
-            </h1>
+            <h1 className="text-2xl font-bold text-slate-900">{project?.name ?? "Project"}</h1>
             {project?.description && (
               <p className="text-sm text-slate-500">{project.description}</p>
             )}
@@ -96,7 +93,10 @@ export default function ProjectBoardPage() {
               </Button>
             </Protected>
             <Protected allowed={perms?.is_owner}>
-              <Link href={`/projects/${id}/settings`} className={buttonClass({ variant: "secondary", size: "sm" })}>
+              <Link
+                href={`/projects/${id}/settings`}
+                className={buttonClass({ variant: "secondary", size: "sm" })}
+              >
                 <Settings className="h-4 w-4" /> Settings
               </Link>
             </Protected>
@@ -121,50 +121,78 @@ export default function ProjectBoardPage() {
 
       {view === "board" && (
         <>
-      {/* Filter bar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search issues…"
-            className="w-auto py-1.5 pl-9"
-          />
-        </div>
-        <Select value={typeF} onChange={setTypeF}
-          options={[{ value: "", label: "All types" }, { value: "epic", label: "Epic" }, { value: "task", label: "Task" }, { value: "story", label: "Story" }, { value: "bug", label: "Bug" }]} />
-        <Select value={prioF} onChange={setPrioF}
-          options={[{ value: "", label: "All priorities" }, { value: "urgent", label: "Urgent" }, { value: "high", label: "High" }, { value: "medium", label: "Medium" }, { value: "low", label: "Low" }]} />
-        <Select value={assigneeF} onChange={setAssigneeF}
-          options={[{ value: "", label: "All assignees" }, { value: "none", label: "Unassigned" }, ...(members ?? []).map((m) => ({ value: m.user_id, label: m.username }))]} />
-        {(query || typeF || prioF || assigneeF) && (
-          <button
-            onClick={() => { setQuery(""); setTypeF(""); setPrioF(""); setAssigneeF(""); }}
-            className="text-xs text-slate-500 hover:text-slate-800"
-          >
-            Clear
-          </button>
-        )}
-      </div>
+          {/* Filter bar */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search issues…"
+                className="w-auto py-1.5 pl-9"
+              />
+            </div>
+            <Select
+              value={typeF}
+              onChange={setTypeF}
+              options={[
+                { value: "", label: "All types" },
+                { value: "epic", label: "Epic" },
+                { value: "task", label: "Task" },
+                { value: "story", label: "Story" },
+                { value: "bug", label: "Bug" },
+              ]}
+            />
+            <Select
+              value={prioF}
+              onChange={setPrioF}
+              options={[
+                { value: "", label: "All priorities" },
+                { value: "urgent", label: "Urgent" },
+                { value: "high", label: "High" },
+                { value: "medium", label: "Medium" },
+                { value: "low", label: "Low" },
+              ]}
+            />
+            <Select
+              value={assigneeF}
+              onChange={setAssigneeF}
+              options={[
+                { value: "", label: "All assignees" },
+                { value: "none", label: "Unassigned" },
+                ...(members ?? []).map((m) => ({ value: m.user_id, label: m.username })),
+              ]}
+            />
+            {(query || typeF || prioF || assigneeF) && (
+              <button
+                onClick={() => {
+                  setQuery("");
+                  setTypeF("");
+                  setPrioF("");
+                  setAssigneeF("");
+                }}
+                className="text-xs text-slate-500 hover:text-slate-800"
+              >
+                Clear
+              </button>
+            )}
+          </div>
 
-      {isLoading ? (
-        <LoaderScreen message="Loading tasks" />
-      ) : (
-        <Board
-          tasks={filtered}
-          canEdit={!!perms?.can_edit}
-          onMove={move}
-          assignees={assignees}
-          projectKey={project?.key}
-        />
-      )}
+          {isLoading ? (
+            <LoaderScreen message="Loading tasks" />
+          ) : (
+            <Board
+              tasks={filtered}
+              canEdit={!!perms?.can_edit}
+              onMove={move}
+              assignees={assignees}
+              projectKey={project?.key}
+            />
+          )}
         </>
       )}
 
-      {showCreate && (
-        <CreateIssueModal projectId={id} onClose={() => setShowCreate(false)} />
-      )}
+      {showCreate && <CreateIssueModal projectId={id} onClose={() => setShowCreate(false)} />}
     </div>
   );
 }

@@ -34,9 +34,15 @@ Db = Annotated[AsyncSession, Depends(get_db)]
 async def list_attachments(task_id: uuid.UUID, user: DBUser, db: Db):
     rows = await db.execute(
         select(
-            Attachment.id, Attachment.task_id, Attachment.filename,
-            Attachment.content_type, Attachment.size, Attachment.created_at,
-        ).where(Attachment.task_id == task_id).order_by(Attachment.created_at)
+            Attachment.id,
+            Attachment.task_id,
+            Attachment.filename,
+            Attachment.content_type,
+            Attachment.size,
+            Attachment.created_at,
+        )
+        .where(Attachment.task_id == task_id)
+        .order_by(Attachment.created_at)
     )
     return [AttachmentOut(**r._mapping) for r in rows.all()]
 
@@ -47,24 +53,29 @@ async def list_attachments(task_id: uuid.UUID, user: DBUser, db: Db):
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require("can_edit", "task", "task_id"))],
 )
-async def upload_attachment(
-    task_id: uuid.UUID, user: DBUser, db: Db, file: UploadFile = File(...)
-):
+async def upload_attachment(task_id: uuid.UUID, user: DBUser, db: Db, file: UploadFile = File(...)):
     if await db.get(Task, task_id) is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Task not found")
     data = await file.read()
     if len(data) > MAX_BYTES:
         raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "File too large (max 5MB)")
     att = Attachment(
-        task_id=task_id, uploader_id=user.id, filename=file.filename or "file",
+        task_id=task_id,
+        uploader_id=user.id,
+        filename=file.filename or "file",
         content_type=file.content_type or "application/octet-stream",
-        size=len(data), data=data,
+        size=len(data),
+        data=data,
     )
     db.add(att)
     await db.flush()
     return AttachmentOut(
-        id=att.id, task_id=task_id, filename=att.filename,
-        content_type=att.content_type, size=att.size, created_at=att.created_at,
+        id=att.id,
+        task_id=task_id,
+        filename=att.filename,
+        content_type=att.content_type,
+        size=att.size,
+        created_at=att.created_at,
     )
 
 

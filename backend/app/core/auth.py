@@ -18,7 +18,6 @@ import structlog
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwk, jwt
-from jose.utils import base64url_decode
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -58,7 +57,7 @@ async def _get_jwks() -> dict:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Auth service unavailable",
-            )
+            ) from e
 
 
 def _find_key(jwks: dict, kid: str):
@@ -76,9 +75,9 @@ PLATFORM_ADMIN_ROLE = "platform-admin"
 
 
 class CurrentUser(BaseModel):
-    sub: str          # Keycloak user UUID — stable, use as primary key
+    sub: str  # Keycloak user UUID — stable, use as primary key
     email: str
-    username: str     # preferred_username
+    username: str  # preferred_username
     given_name: str = ""
     family_name: str = ""
     roles: list[str] = []  # Keycloak realm roles from realm_access.roles
@@ -113,11 +112,11 @@ async def get_current_user(
     # Decode header without verification to get kid
     try:
         header = jwt.get_unverified_header(token)
-    except JWTError:
+    except JWTError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token format",
-        )
+        ) from e
 
     kid = header.get("kid")
     if not kid:
@@ -158,7 +157,7 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token validation failed",
-        )
+        ) from e
 
     user = CurrentUser(
         sub=payload["sub"],

@@ -59,22 +59,32 @@ class Authz:
                     allowed = cached == b"1"
                     span.set_attribute("authz.cache", "hit")
                     span.set_attribute("authz.allowed", allowed)
-                    logger.debug("authz_check", user=user, relation=relation,
-                                 object=obj, allowed=allowed, cache="hit")
+                    logger.debug(
+                        "authz_check",
+                        user=user,
+                        relation=relation,
+                        object=obj,
+                        allowed=allowed,
+                        cache="hit",
+                    )
                     return allowed
 
             async with OpenFgaClient(self._cfg) as fga:
-                resp = await fga.check(
-                    ClientCheckRequest(user=user, relation=relation, object=obj)
-                )
+                resp = await fga.check(ClientCheckRequest(user=user, relation=relation, object=obj))
             allowed = bool(resp.allowed)
 
             if self._redis is not None:
                 await self._redis.set(key, b"1" if allowed else b"0", ex=30)
             span.set_attribute("authz.cache", "miss")
             span.set_attribute("authz.allowed", allowed)
-            logger.debug("authz_check", user=user, relation=relation,
-                         object=obj, allowed=allowed, cache="miss")
+            logger.debug(
+                "authz_check",
+                user=user,
+                relation=relation,
+                object=obj,
+                allowed=allowed,
+                cache="miss",
+            )
             return allowed
 
     async def list_objects(self, user: str, relation: str, obj_type: str) -> list[str]:
@@ -85,15 +95,13 @@ class Authz:
                 ClientListObjectsRequest(user=user, relation=relation, type=obj_type)
             )
         prefix = f"{obj_type}:"
-        return [o[len(prefix):] if o.startswith(prefix) else o for o in resp.objects]
+        return [o[len(prefix) :] if o.startswith(prefix) else o for o in resp.objects]
 
     # -- mutations ----------------------------------------------------------
     async def write(self, user: str, relation: str, obj: str) -> None:
         async with OpenFgaClient(self._cfg) as fga:
             await fga.write(
-                ClientWriteRequest(
-                    writes=[ClientTuple(user=user, relation=relation, object=obj)]
-                )
+                ClientWriteRequest(writes=[ClientTuple(user=user, relation=relation, object=obj)])
             )
         logger.debug("authz_write", user=user, relation=relation, object=obj)
         await self._invalidate(user)
@@ -101,9 +109,7 @@ class Authz:
     async def delete(self, user: str, relation: str, obj: str) -> None:
         async with OpenFgaClient(self._cfg) as fga:
             await fga.write(
-                ClientWriteRequest(
-                    deletes=[ClientTuple(user=user, relation=relation, object=obj)]
-                )
+                ClientWriteRequest(deletes=[ClientTuple(user=user, relation=relation, object=obj)])
             )
         logger.debug("authz_delete", user=user, relation=relation, object=obj)
         await self._invalidate(user)

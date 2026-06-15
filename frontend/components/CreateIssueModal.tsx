@@ -49,7 +49,10 @@ export function CreateIssueModal({
         assignee_id: assignee || null,
         sprint_id: sprint || null,
         story_points: points === "" ? null : Number(points),
-        labels: labels.split(",").map((l) => l.trim()).filter(Boolean),
+        labels: labels
+          .split(",")
+          .map((l) => l.trim())
+          .filter(Boolean),
       },
       {
         onSuccess: () => {
@@ -90,43 +93,82 @@ export function CreateIssueModal({
 
         <div>
           <Label>Summary *</Label>
-          <Input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What needs to be done?" />
+          <Input
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="What needs to be done?"
+          />
         </div>
 
         <div>
           <Label>Description</Label>
-          <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Add more detail…" />
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+            placeholder="Add more detail…"
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Priority</Label>
-            <Select value={priority} onChange={(v) => setPriority(v as TaskPriority)} className="w-full capitalize"
-              options={PRIORITIES.map((p) => ({ value: p, label: p }))} />
+            <Select
+              value={priority}
+              onChange={(v) => setPriority(v as TaskPriority)}
+              className="w-full capitalize"
+              options={PRIORITIES.map((p) => ({ value: p, label: p }))}
+            />
           </div>
           <div>
             <Label>Assignee</Label>
-            <Select value={assignee} onChange={setAssignee} className="w-full"
-              options={[{ value: "", label: "Unassigned" }, ...(members ?? []).map((m) => ({ value: m.user_id, label: m.username }))]} />
+            <Select
+              value={assignee}
+              onChange={setAssignee}
+              className="w-full"
+              options={[
+                { value: "", label: "Unassigned" },
+                ...(members ?? []).map((m) => ({ value: m.user_id, label: m.username })),
+              ]}
+            />
           </div>
           <div>
             <Label>Sprint</Label>
-            <Select value={sprint} onChange={setSprint} className="w-full"
-              options={[{ value: "", label: "Backlog" }, ...(sprints ?? []).map((s) => ({ value: s.id, label: s.name }))]} />
+            <Select
+              value={sprint}
+              onChange={setSprint}
+              className="w-full"
+              options={[
+                { value: "", label: "Backlog" },
+                ...(sprints ?? []).map((s) => ({ value: s.id, label: s.name })),
+              ]}
+            />
           </div>
           <div>
             <Label>Story points</Label>
-            <Input type="number" min={0} value={points} onChange={(e) => setPoints(e.target.value)} />
+            <Input
+              type="number"
+              min={0}
+              value={points}
+              onChange={(e) => setPoints(e.target.value)}
+            />
           </div>
         </div>
 
         <div>
           <Label>Labels</Label>
-          <Input value={labels} onChange={(e) => setLabels(e.target.value)} placeholder="comma, separated" />
+          <Input
+            value={labels}
+            onChange={(e) => setLabels(e.target.value)}
+            placeholder="comma, separated"
+          />
         </div>
 
         <div className="flex justify-end gap-2 border-t pt-4">
-          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
           <Button disabled={!title.trim() || create.isPending}>
             {create.isPending ? "Creating…" : "Create"}
           </Button>

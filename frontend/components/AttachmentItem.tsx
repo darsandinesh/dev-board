@@ -54,11 +54,7 @@ export function AttachmentItem({
         <Download className="h-4 w-4" />
       </button>
       {canDelete && (
-        <button
-          onClick={onDelete}
-          className="text-slate-300 hover:text-red-500"
-          title="Delete"
-        >
+        <button onClick={onDelete} className="text-slate-300 hover:text-red-500" title="Delete">
           <Trash2 className="h-4 w-4" />
         </button>
       )}

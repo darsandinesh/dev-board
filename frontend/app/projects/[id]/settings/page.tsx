@@ -64,9 +64,7 @@ export default function ProjectSettingsPage() {
         >
           <ArrowLeft className="h-4 w-4" /> Back to board
         </Link>
-        <h1 className="mt-2 text-2xl font-bold text-slate-900">
-          {project?.name} · Settings
-        </h1>
+        <h1 className="mt-2 text-2xl font-bold text-slate-900">{project?.name} · Settings</h1>
       </div>
 
       {/* Project details */}
@@ -86,7 +84,12 @@ export default function ProjectSettingsPage() {
           </div>
           <div>
             <Label>Description</Label>
-            <Textarea value={description} disabled={!isOwner} rows={3} onChange={(e) => setDescription(e.target.value)} />
+            <Textarea
+              value={description}
+              disabled={!isOwner}
+              rows={3}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </div>
           {isOwner && (
             <Button
@@ -116,8 +119,7 @@ export default function ProjectSettingsPage() {
         </h2>
         {isOwner ? (
           <p className="mt-1 text-sm text-slate-500">
-            Add people to this project. They’ll only see it once added (projects
-            are private).
+            Add people to this project. They’ll only see it once added (projects are private).
           </p>
         ) : (
           <p className="mt-1 text-xs text-slate-400">
@@ -132,7 +134,10 @@ export default function ProjectSettingsPage() {
               excludeIds={(members ?? []).map((m) => m.user_id)}
               pending={addMember.isPending}
               onAdd={(userId, role) =>
-                addMember.mutate({ userId, role }, { onSuccess: () => toast.success("Member added") })
+                addMember.mutate(
+                  { userId, role },
+                  { onSuccess: () => toast.success("Member added") },
+                )
               }
             />
           </div>

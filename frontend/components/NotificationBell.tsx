@@ -12,12 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import {
-  useMarkAllRead,
-  useMarkRead,
-  useNotifications,
-  type Notification,
-} from "@/lib/api";
+import { useMarkAllRead, useMarkRead, useNotifications, type Notification } from "@/lib/api";
 
 const KIND_ICON: Record<string, LucideIcon> = {
   assigned: UserPlus,
@@ -73,7 +68,8 @@ export function NotificationBell() {
           <div className="absolute right-0 z-50 mt-2 w-96 overflow-hidden rounded-xl border bg-white shadow-xl">
             <div className="flex items-center justify-between border-b px-4 py-2.5">
               <span className="text-sm font-semibold text-slate-700">
-                Notifications {unread > 0 && <span className="text-indigo-600">· {unread} new</span>}
+                Notifications{" "}
+                {unread > 0 && <span className="text-indigo-600">· {unread} new</span>}
               </span>
               {unread > 0 && (
                 <button
@@ -102,7 +98,9 @@ export function NotificationBell() {
                     >
                       <span
                         className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-                          n.is_read ? "bg-slate-100 text-slate-400" : "bg-indigo-100 text-indigo-600"
+                          n.is_read
+                            ? "bg-slate-100 text-slate-400"
+                            : "bg-indigo-100 text-indigo-600"
                         }`}
                       >
                         <Icon className="h-3.5 w-3.5" />

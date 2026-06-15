@@ -10,6 +10,7 @@ project; a plain viewer sees ONLY the tasks assigned to them. Assignment is an
 OpenFGA `assignee` tuple kept in sync with the task's assignee_id.
 """
 
+import re
 import uuid
 from typing import Annotated
 
@@ -20,8 +21,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import DBUser
 from app.core.authz import authz, require
 from app.db.session import get_db
-import re
-
 from app.models.notification import Notification
 from app.models.project import Project
 from app.models.task import Task, TaskActivity, TaskComment, TaskLink
@@ -56,9 +55,15 @@ async def _log(db: AsyncSession, task_id, actor_id, action: str, detail: str | N
 
 def _notify(db: AsyncSession, user_id, actor_id, task_id, kind: str, message: str):
     if user_id and user_id != actor_id:  # never notify yourself
-        db.add(Notification(
-            user_id=user_id, actor_id=actor_id, task_id=task_id, kind=kind, message=message,
-        ))
+        db.add(
+            Notification(
+                user_id=user_id,
+                actor_id=actor_id,
+                task_id=task_id,
+                kind=kind,
+                message=message,
+            )
+        )
 
 
 async def _notify_mentions(db: AsyncSession, body: str, actor, task_id, task_title: str):
@@ -67,8 +72,14 @@ async def _notify_mentions(db: AsyncSession, body: str, actor, task_id, task_tit
         return
     rows = await db.execute(select(User).where(User.username.in_(usernames)))
     for u in rows.scalars().all():
-        _notify(db, u.id, actor.id, task_id, "mentioned",
-                f"{actor.username} mentioned you in {task_title}")
+        _notify(
+            db,
+            u.id,
+            actor.id,
+            task_id,
+            "mentioned",
+            f"{actor.username} mentioned you in {task_title}",
+        )
 
 
 @router.post("", response_model=TaskOut, status_code=status.HTTP_201_CREATED)
@@ -81,9 +92,7 @@ async def create_task(body: TaskCreate, user: DBUser, db: Db):
 
     next_seq = (
         await db.execute(
-            select(func.coalesce(func.max(Task.seq), 0)).where(
-                Task.project_id == body.project_id
-            )
+            select(func.coalesce(func.max(Task.seq), 0)).where(Task.project_id == body.project_id)
         )
     ).scalar() + 1
 
@@ -111,8 +120,14 @@ async def create_task(body: TaskCreate, user: DBUser, db: Db):
     if assignee_sub:
         await authz.write(f"user:{assignee_sub}", "assignee", f"task:{task.id}")
     if body.assignee_id:
-        _notify(db, body.assignee_id, user.id, task.id, "assigned",
-                f"{user.username} assigned you {task.title}")
+        _notify(
+            db,
+            body.assignee_id,
+            user.id,
+            task.id,
+            "assigned",
+            f"{user.username} assigned you {task.title}",
+        )
     return task
 
 
@@ -169,8 +184,13 @@ async def update_task(task_id: uuid.UUID, body: TaskUpdate, user: DBUser, db: Db
             nv = patch[field].value if hasattr(patch[field], "value") else patch[field]
             await _log(db, task.id, user.id, field, f"{ov} → {nv}")
     if "assignee_id" in patch and patch["assignee_id"] != old_assignee_id:
-        await _log(db, task.id, user.id, "assignee",
-                   "unassigned" if patch["assignee_id"] is None else "reassigned")
+        await _log(
+            db,
+            task.id,
+            user.id,
+            "assignee",
+            "unassigned" if patch["assignee_id"] is None else "reassigned",
+        )
 
     # Keep the assignee tuple in sync if assignee changed.
     if "assignee_id" in patch and patch["assignee_id"] != old_assignee_id:
@@ -181,8 +201,14 @@ async def update_task(task_id: uuid.UUID, body: TaskUpdate, user: DBUser, db: Db
         if new_sub:
             await authz.write(f"user:{new_sub}", "assignee", f"task:{task_id}")
         if patch["assignee_id"]:
-            _notify(db, patch["assignee_id"], user.id, task_id, "assigned",
-                    f"{user.username} assigned you {task.title}")
+            _notify(
+                db,
+                patch["assignee_id"],
+                user.id,
+                task_id,
+                "assigned",
+                f"{user.username} assigned you {task.title}",
+            )
     return task
 
 
@@ -221,8 +247,12 @@ async def list_comments(task_id: uuid.UUID, user: DBUser, db: Db):
     )
     return [
         CommentOut(
-            id=c.id, task_id=c.task_id, author_id=c.author_id,
-            author_username=username, body=c.body, created_at=c.created_at,
+            id=c.id,
+            task_id=c.task_id,
+            author_id=c.author_id,
+            author_username=username,
+            body=c.body,
+            created_at=c.created_at,
         )
         for c, username in rows.all()
     ]
@@ -244,13 +274,23 @@ async def add_comment(task_id: uuid.UUID, body: CommentCreate, user: DBUser, db:
     # notify @mentions, plus the assignee (if any, and not the commenter)
     await _notify_mentions(db, body.body, user, task_id, task.title if task else "an issue")
     if task and task.assignee_id:
-        _notify(db, task.assignee_id, user.id, task_id, "commented",
-                f"{user.username} commented on {task.title}")
+        _notify(
+            db,
+            task.assignee_id,
+            user.id,
+            task_id,
+            "commented",
+            f"{user.username} commented on {task.title}",
+        )
     await db.flush()
     await db.refresh(comment)
     return CommentOut(
-        id=comment.id, task_id=task_id, author_id=user.id,
-        author_username=user.username, body=comment.body, created_at=comment.created_at,
+        id=comment.id,
+        task_id=task_id,
+        author_id=user.id,
+        author_username=user.username,
+        body=comment.body,
+        created_at=comment.created_at,
     )
 
 
@@ -268,8 +308,11 @@ async def list_activity(task_id: uuid.UUID, user: DBUser, db: Db):
     )
     return [
         ActivityOut(
-            id=a.id, actor_username=username, action=a.action,
-            detail=a.detail, created_at=a.created_at,
+            id=a.id,
+            actor_username=username,
+            action=a.action,
+            detail=a.detail,
+            created_at=a.created_at,
         )
         for a, username in rows.all()
     ]
@@ -284,9 +327,7 @@ async def list_activity(task_id: uuid.UUID, user: DBUser, db: Db):
     dependencies=[Depends(require("can_view", "task", "task_id"))],
 )
 async def list_children(task_id: uuid.UUID, user: DBUser, db: Db):
-    rows = await db.execute(
-        select(Task).where(Task.parent_id == task_id).order_by(Task.seq)
-    )
+    rows = await db.execute(select(Task).where(Task.parent_id == task_id).order_by(Task.seq))
     return list(rows.scalars().all())
 
 
@@ -303,8 +344,12 @@ async def list_links(task_id: uuid.UUID, user: DBUser, db: Db):
     )
     return [
         LinkOut(
-            id=link.id, link_type=link.link_type, target_id=t.id,
-            target_seq=t.seq, target_title=t.title, target_status=t.status,
+            id=link.id,
+            link_type=link.link_type,
+            target_id=t.id,
+            target_seq=t.seq,
+            target_title=t.title,
+            target_status=t.status,
         )
         for link, t in rows.all()
     ]
@@ -327,8 +372,12 @@ async def add_link(task_id: uuid.UUID, body: LinkCreate, user: DBUser, db: Db):
     await _log(db, task_id, user.id, "linked", f"{body.link_type.value} {target.title}")
     await db.flush()
     return LinkOut(
-        id=link.id, link_type=link.link_type, target_id=target.id,
-        target_seq=target.seq, target_title=target.title, target_status=target.status,
+        id=link.id,
+        link_type=link.link_type,
+        target_id=target.id,
+        target_seq=target.seq,
+        target_title=target.title,
+        target_status=target.status,
     )
 
 

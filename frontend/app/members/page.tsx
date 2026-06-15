@@ -72,8 +72,8 @@ export default function MembersPage() {
           <Users className="h-5 w-5 text-indigo-600" /> Organization members
         </h2>
         <p className="mb-4 text-sm text-slate-500">
-          New members are automatically added to this org’s default project as
-          editors. Add them to other projects from each project’s settings.
+          New members are automatically added to this org’s default project as editors. Add them to
+          other projects from each project’s settings.
         </p>
 
         <AddMemberSearch
@@ -110,9 +110,7 @@ export default function MembersPage() {
                         onChange={(role) => updateRole.mutate({ userId: m.user_id, role })}
                         options={ORG_ROLES.map((r) => ({ value: r, label: roleLabel(r) }))}
                       />
-                      {m.role === "admin" && (
-                        <ShieldCheck className="h-4 w-4 text-indigo-500" />
-                      )}
+                      {m.role === "admin" && <ShieldCheck className="h-4 w-4 text-indigo-500" />}
                       {!isSelf && (
                         <button
                           onClick={() => removeMember.mutate(m.user_id)}

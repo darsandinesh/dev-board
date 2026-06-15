@@ -5,23 +5,12 @@ import { Trash2 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { Loader } from "@/components/Loader";
 import { Select } from "@/components/Select";
-import {
-  useMe,
-  useProjectMembers,
-  useRemoveProjectMember,
-  useUpdateMemberRole,
-} from "@/lib/api";
+import { useMe, useProjectMembers, useRemoveProjectMember, useUpdateMemberRole } from "@/lib/api";
 import { roleLabel } from "@/lib/roles";
 
 const ROLES = ["owner", "editor", "viewer"];
 
-export function MemberTable({
-  projectId,
-  canManage,
-}: {
-  projectId: string;
-  canManage: boolean;
-}) {
+export function MemberTable({ projectId, canManage }: { projectId: string; canManage: boolean }) {
   const { data: me } = useMe();
   const { data: members, isLoading } = useProjectMembers(projectId);
   const updateRole = useUpdateMemberRole(projectId);

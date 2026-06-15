@@ -33,9 +33,7 @@ export function Board({
           onDropTask={onMove}
           assignees={assignees}
           projectKey={projectKey}
-          tasks={tasks
-            .filter((t) => t.status === c.status)
-            .sort((a, b) => a.position - b.position)}
+          tasks={tasks.filter((t) => t.status === c.status).sort((a, b) => a.position - b.position)}
         />
       ))}
     </div>

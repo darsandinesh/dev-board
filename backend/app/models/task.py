@@ -59,9 +59,7 @@ class Task(Base):
     priority: Mapped[TaskPriority] = mapped_column(
         default=TaskPriority.medium, server_default="medium"
     )
-    labels: Mapped[list[str]] = mapped_column(
-        ARRAY(String), default=list, server_default="{}"
-    )
+    labels: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, server_default="{}")
     story_points: Mapped[int | None]
     due_date: Mapped[date | None]
     assignee_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -69,9 +67,7 @@ class Task(Base):
     )
     position: Mapped[int] = mapped_column(default=0)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now()
-    )
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
 
 
 class TaskComment(Base):
@@ -110,6 +106,6 @@ class TaskActivity(Base):
         ForeignKey("tasks.id", ondelete="CASCADE"), index=True
     )
     actor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    action: Mapped[str]            # created | status | assignee | priority | type | edited
-    detail: Mapped[str | None]     # human-readable, e.g. "todo → done"
+    action: Mapped[str]  # created | status | assignee | priority | type | edited
+    detail: Mapped[str | None]  # human-readable, e.g. "todo → done"
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

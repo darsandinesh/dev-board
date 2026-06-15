@@ -63,15 +63,16 @@ async def create_org(body: OrgCreate, user: DBUser, db: Db):
     db.add(OrgMember(org_id=org.id, user_id=admin_user.id, role=OrgRole.admin))
 
     default_project = Project(
-        org_id=org.id, name="General", description="Default project",
-        is_default=True, key="GEN",
+        org_id=org.id,
+        name="General",
+        description="Default project",
+        is_default=True,
+        key="GEN",
     )
     db.add(default_project)
     await db.flush()
     db.add(
-        ProjectMember(
-            project_id=default_project.id, user_id=admin_user.id, role=ProjectRole.owner
-        )
+        ProjectMember(project_id=default_project.id, user_id=admin_user.id, role=ProjectRole.owner)
     )
     await db.flush()
 
@@ -97,7 +98,9 @@ async def list_my_orgs(current: AuthUser, user: DBUser, db: Db):
         )
         return [
             OrgListItem(
-                id=org.id, name=org.name, created_at=org.created_at,
+                id=org.id,
+                name=org.name,
+                created_at=org.created_at,
                 my_role=role.value if role is not None else "admin",
             )
             for org, role in rows.all()
@@ -109,9 +112,7 @@ async def list_my_orgs(current: AuthUser, user: DBUser, db: Db):
         .where(OrgMember.user_id == user.id)
     )
     return [
-        OrgListItem(
-            id=org.id, name=org.name, created_at=org.created_at, my_role=role.value
-        )
+        OrgListItem(id=org.id, name=org.name, created_at=org.created_at, my_role=role.value)
         for org, role in rows.all()
     ]
 
@@ -140,8 +141,7 @@ async def list_org_members(org_id: uuid.UUID, user: DBUser, db: Db):
         .where(OrgMember.org_id == org_id)
     )
     return [
-        MemberOut(user_id=r.user_id, username=r.username, role=r.role.value)
-        for r in rows.all()
+        MemberOut(user_id=r.user_id, username=r.username, role=r.role.value) for r in rows.all()
     ]
 
 
@@ -182,9 +182,7 @@ async def add_org_member(org_id: uuid.UUID, body: OrgMemberCreate, user: DBUser,
             )
         )
         await db.flush()
-        await authz.write(
-            f"user:{target.keycloak_sub}", "editor", f"project:{default_project.id}"
-        )
+        await authz.write(f"user:{target.keycloak_sub}", "editor", f"project:{default_project.id}")
 
     return MemberOut(user_id=body.user_id, username=target.username, role=body.role.value)
 

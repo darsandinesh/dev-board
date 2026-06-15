@@ -57,9 +57,7 @@ export function Sidebar() {
       >
         <div className="flex items-center gap-2">
           <SquareKanban className="h-6 w-6 text-indigo-400" />
-          {!collapsed && (
-            <span className="text-lg font-semibold tracking-tight">DevBoard</span>
-          )}
+          {!collapsed && <span className="text-lg font-semibold tracking-tight">DevBoard</span>}
         </div>
         <button
           onClick={toggle}

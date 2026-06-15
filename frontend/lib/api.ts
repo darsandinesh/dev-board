@@ -1,11 +1,7 @@
 "use client";
 
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { getSession, signIn } from "next-auth/react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getSession } from "next-auth/react";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -125,19 +121,22 @@ export interface Permissions {
 // ---- fetch wrapper ----------------------------------------------------------
 async function authedFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const session = await getSession();
-  if (session?.error === "RefreshAccessTokenError") {
-    await signIn("keycloak"); // refresh failed → force re-login
+  // Don't auto-redirect to Keycloak here — AppShell renders our own sign-in
+  // screen whenever the session is missing or its token refresh has failed.
+  // Bouncing straight to Keycloak on every 401 surprised users and skipped
+  // the in-app sign-in card.
+  if (session?.error === "RefreshAccessTokenError" || !session?.accessToken) {
+    throw new Error("Not authenticated");
   }
   const res = await fetch(`${API}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${session?.accessToken ?? ""}`,
+      Authorization: `Bearer ${session.accessToken}`,
       ...(init.headers ?? {}),
     },
   });
   if (res.status === 401) {
-    await signIn("keycloak");
     throw new Error("Unauthorized");
   }
   if (!res.ok) {
@@ -327,8 +326,7 @@ export function useMarkAllRead() {
 export function useMarkRead() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      authedFetch<null>(`/notifications/${id}/read`, { method: "POST" }),
+    mutationFn: (id: string) => authedFetch<null>(`/notifications/${id}/read`, { method: "POST" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
   });
 }
@@ -395,8 +393,7 @@ export function useUpdateSprint(projectId: string) {
 export function useDeleteSprint(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      authedFetch<null>(`/sprints/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => authedFetch<null>(`/sprints/${id}`, { method: "DELETE" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["sprints", projectId] }),
   });
 }
@@ -597,8 +594,7 @@ export interface UserResult {
 export function useUserSearch(query: string) {
   return useQuery({
     queryKey: ["users", query],
-    queryFn: () =>
-      authedFetch<UserResult[]>(`/users?search=${encodeURIComponent(query)}`),
+    queryFn: () => authedFetch<UserResult[]>(`/users?search=${encodeURIComponent(query)}`),
   });
 }
 

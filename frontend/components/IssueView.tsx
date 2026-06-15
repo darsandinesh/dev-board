@@ -127,7 +127,10 @@ export function IssueView({
     <div className="space-y-4">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-sm text-slate-500">
-        <button onClick={() => router.push(`/projects/${projectId}`)} className="font-medium text-slate-600 hover:text-indigo-700">
+        <button
+          onClick={() => router.push(`/projects/${projectId}`)}
+          className="font-medium text-slate-600 hover:text-indigo-700"
+        >
           {project?.name}
         </button>
         <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
@@ -155,8 +158,16 @@ export function IssueView({
               >
                 <Paperclip className="h-3.5 w-3.5" /> Attach
               </button>
-              <input ref={fileRef} type="file" className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAttachment.mutate(f); e.target.value = ""; }} />
+              <input
+                ref={fileRef}
+                type="file"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) uploadAttachment.mutate(f);
+                  e.target.value = "";
+                }}
+              />
             </div>
           )}
 
@@ -168,7 +179,10 @@ export function IssueView({
               rows={5}
               placeholder={ro ? "—" : "Add a description…"}
               onChange={(e) => setDescription(e.target.value)}
-              onBlur={() => description !== (task.description ?? "") && patch({ description: description || null })}
+              onBlur={() =>
+                description !== (task.description ?? "") &&
+                patch({ description: description || null })
+              }
               className="w-full rounded-lg border px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-500 disabled:bg-slate-50"
             />
           </div>
@@ -180,21 +194,34 @@ export function IssueView({
               </div>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {attachments?.map((a) => (
-                  <AttachmentItem key={a.id} taskId={taskId} att={a} canDelete={!ro}
-                    onDelete={() => deleteAttachment.mutate(a.id)} onPreview={setPreview} />
+                  <AttachmentItem
+                    key={a.id}
+                    taskId={taskId}
+                    att={a}
+                    canDelete={!ro}
+                    onDelete={() => deleteAttachment.mutate(a.id)}
+                    onPreview={setPreview}
+                  />
                 ))}
-                {attachments?.length === 0 && <li className="text-sm text-slate-400">No attachments yet.</li>}
+                {attachments?.length === 0 && (
+                  <li className="text-sm text-slate-400">No attachments yet.</li>
+                )}
               </ul>
             </div>
           )}
 
           {children && children.length > 0 && (
             <div>
-              <div className="mb-1.5 text-sm font-semibold text-slate-700">Child issues ({children.length})</div>
+              <div className="mb-1.5 text-sm font-semibold text-slate-700">
+                Child issues ({children.length})
+              </div>
               <ul className="divide-y rounded-lg border">
                 {children.map((c) => (
                   <li key={c.id}>
-                    <button onClick={() => goIssue(c.id)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50">
+                    <button
+                      onClick={() => goIssue(c.id)}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50"
+                    >
                       <span className="font-mono text-xs text-slate-400">
                         {project?.key && c.seq != null ? `${project.key}-${c.seq}` : ""}
                       </span>
@@ -214,34 +241,65 @@ export function IssueView({
             <ul className="space-y-1">
               {links?.map((l) => (
                 <li key={l.id} className="flex items-center gap-2 text-sm">
-                  <span className="w-24 shrink-0 text-xs text-slate-400">{LINK_LABELS[l.link_type]}</span>
-                  <button onClick={() => goIssue(l.target_id)} className="flex-1 truncate text-left text-slate-700 hover:text-indigo-700">
+                  <span className="w-24 shrink-0 text-xs text-slate-400">
+                    {LINK_LABELS[l.link_type]}
+                  </span>
+                  <button
+                    onClick={() => goIssue(l.target_id)}
+                    className="flex-1 truncate text-left text-slate-700 hover:text-indigo-700"
+                  >
                     <span className="font-mono text-xs text-slate-400">
-                      {project?.key && l.target_seq != null ? `${project.key}-${l.target_seq} ` : ""}
+                      {project?.key && l.target_seq != null
+                        ? `${project.key}-${l.target_seq} `
+                        : ""}
                     </span>
                     {l.target_title}
                   </button>
                   {!ro && (
-                    <button onClick={() => removeLink.mutate(l.id)} className="text-slate-300 hover:text-red-500">
+                    <button
+                      onClick={() => removeLink.mutate(l.id)}
+                      className="text-slate-300 hover:text-red-500"
+                    >
                       <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </li>
               ))}
-              {(!links || links.length === 0) && <li className="text-sm text-slate-400">No linked issues.</li>}
+              {(!links || links.length === 0) && (
+                <li className="text-sm text-slate-400">No linked issues.</li>
+              )}
             </ul>
             {!ro && (
               <div className="mt-2 flex gap-2">
-                <Select value={linkType} onChange={(v) => setLinkType(v as LinkType)}
-                  options={(["blocks", "blocked_by", "relates_to", "duplicates"] as LinkType[]).map((lt) => ({ value: lt, label: LINK_LABELS[lt] }))} />
-                <Select value={linkTarget} onChange={setLinkTarget} placeholder="Select an issue…" className="flex-1"
-                  options={(tasks ?? []).filter((t) => t.id !== task.id).map((t) => ({
-                    value: t.id,
-                    label: `${project?.key && t.seq != null ? `${project.key}-${t.seq} ` : ""}${t.title}`,
-                  }))} />
-                <button disabled={!linkTarget || addLink.isPending}
-                  onClick={() => addLink.mutate({ target_id: linkTarget, link_type: linkType }, { onSuccess: () => setLinkTarget("") })}
-                  className="rounded-md bg-slate-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-900 disabled:opacity-50">
+                <Select
+                  value={linkType}
+                  onChange={(v) => setLinkType(v as LinkType)}
+                  options={(["blocks", "blocked_by", "relates_to", "duplicates"] as LinkType[]).map(
+                    (lt) => ({ value: lt, label: LINK_LABELS[lt] }),
+                  )}
+                />
+                <Select
+                  value={linkTarget}
+                  onChange={setLinkTarget}
+                  placeholder="Select an issue…"
+                  className="flex-1"
+                  options={(tasks ?? [])
+                    .filter((t) => t.id !== task.id)
+                    .map((t) => ({
+                      value: t.id,
+                      label: `${project?.key && t.seq != null ? `${project.key}-${t.seq} ` : ""}${t.title}`,
+                    }))}
+                />
+                <button
+                  disabled={!linkTarget || addLink.isPending}
+                  onClick={() =>
+                    addLink.mutate(
+                      { target_id: linkTarget, link_type: linkType },
+                      { onSuccess: () => setLinkTarget("") },
+                    )
+                  }
+                  className="rounded-md bg-slate-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-900 disabled:opacity-50"
+                >
                   Link
                 </button>
               </div>
@@ -262,13 +320,24 @@ export function IssueView({
 
             {tab === "comments" ? (
               <>
-                <form className="mb-3 flex gap-2"
-                  onSubmit={(e) => { e.preventDefault(); if (!comment.trim()) return; addComment.mutate(comment, { onSuccess: () => setComment("") }); }}>
-                  <input value={comment} onChange={(e) => setComment(e.target.value)}
+                <form
+                  className="mb-3 flex gap-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!comment.trim()) return;
+                    addComment.mutate(comment, { onSuccess: () => setComment("") });
+                  }}
+                >
+                  <input
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
                     placeholder="Add a comment… (use @username to mention)"
-                    className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-                  <button disabled={addComment.isPending || !comment.trim()}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+                    className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                  />
+                  <button
+                    disabled={addComment.isPending || !comment.trim()}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                  >
                     <Send className="h-4 w-4" />
                   </button>
                 </form>
@@ -278,13 +347,18 @@ export function IssueView({
                       <Avatar name={c.author_username} size={28} />
                       <div className="flex-1 rounded-lg bg-slate-50 px-3 py-2">
                         <div className="text-xs text-slate-500">
-                          <span className="font-medium text-slate-700">{c.author_username}</span> · {new Date(c.created_at).toLocaleString()}
+                          <span className="font-medium text-slate-700">{c.author_username}</span> ·{" "}
+                          {new Date(c.created_at).toLocaleString()}
                         </div>
-                        <div className="mt-0.5 whitespace-pre-wrap text-sm text-slate-700">{c.body}</div>
+                        <div className="mt-0.5 whitespace-pre-wrap text-sm text-slate-700">
+                          {c.body}
+                        </div>
                       </div>
                     </li>
                   ))}
-                  {comments?.length === 0 && <li className="text-sm text-slate-400">No comments yet.</li>}
+                  {comments?.length === 0 && (
+                    <li className="text-sm text-slate-400">No comments yet.</li>
+                  )}
                 </ul>
               </>
             ) : (
@@ -313,7 +387,10 @@ export function IssueView({
                         </div>
                         <div className="mt-0.5 text-xs text-slate-400">
                           {new Date(a.created_at).toLocaleString(undefined, {
-                            month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
                           })}
                         </div>
                       </div>
@@ -339,11 +416,20 @@ export function IssueView({
           />
 
           <div className="space-y-3 rounded-lg border bg-white p-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Details</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Details
+            </div>
             <Field label="Assignee">
-              <Select value={task.assignee_id ?? ""} disabled={ro} className="w-full"
+              <Select
+                value={task.assignee_id ?? ""}
+                disabled={ro}
+                className="w-full"
                 onChange={(v) => patch({ assignee_id: v || null })}
-                options={[{ value: "", label: "Unassigned" }, ...(members ?? []).map((m) => ({ value: m.user_id, label: m.username }))]} />
+                options={[
+                  { value: "", label: "Unassigned" },
+                  ...(members ?? []).map((m) => ({ value: m.user_id, label: m.username })),
+                ]}
+              />
             </Field>
             <Field label="Reporter">
               <div className="flex items-center gap-2 px-1 py-1 text-sm text-slate-600">
@@ -352,46 +438,96 @@ export function IssueView({
               </div>
             </Field>
             <Field label="Type">
-              <Select value={task.type} disabled={ro} className="w-full capitalize"
+              <Select
+                value={task.type}
+                disabled={ro}
+                className="w-full capitalize"
                 onChange={(v) => patch({ type: v as Task["type"] })}
-                options={TYPES.map((t) => ({ value: t, label: t }))} />
+                options={TYPES.map((t) => ({ value: t, label: t }))}
+              />
             </Field>
             <Field label="Priority">
-              <Select value={task.priority} disabled={ro} className="w-full capitalize"
+              <Select
+                value={task.priority}
+                disabled={ro}
+                className="w-full capitalize"
                 onChange={(v) => patch({ priority: v as Task["priority"] })}
-                options={PRIORITIES.map((p) => ({ value: p, label: p }))} />
+                options={PRIORITIES.map((p) => ({ value: p, label: p }))}
+              />
             </Field>
             <Field label="Sprint">
-              <Select value={task.sprint_id ?? ""} disabled={ro} className="w-full"
+              <Select
+                value={task.sprint_id ?? ""}
+                disabled={ro}
+                className="w-full"
                 onChange={(v) => patch({ sprint_id: v || null })}
-                options={[{ value: "", label: "Backlog" }, ...(sprints ?? []).map((s) => ({ value: s.id, label: s.name }))]} />
+                options={[
+                  { value: "", label: "Backlog" },
+                  ...(sprints ?? []).map((s) => ({ value: s.id, label: s.name })),
+                ]}
+              />
             </Field>
             <Field label="Story points">
-              <input type="number" min={0} defaultValue={task.story_points ?? ""} disabled={ro} className={ctl}
-                onBlur={(e) => patch({ story_points: e.target.value === "" ? null : Number(e.target.value) })} />
+              <input
+                type="number"
+                min={0}
+                defaultValue={task.story_points ?? ""}
+                disabled={ro}
+                className={ctl}
+                onBlur={(e) =>
+                  patch({ story_points: e.target.value === "" ? null : Number(e.target.value) })
+                }
+              />
             </Field>
             <Field label="Parent">
-              <Select value={task.parent_id ?? ""} disabled={ro} className="w-full"
+              <Select
+                value={task.parent_id ?? ""}
+                disabled={ro}
+                className="w-full"
                 onChange={(v) => patch({ parent_id: v || null })}
-                options={[{ value: "", label: "None" }, ...(tasks ?? []).filter((t) => t.id !== task.id).map((t) => ({
-                  value: t.id,
-                  label: `${project?.key && t.seq != null ? `${project.key}-${t.seq} ` : ""}${t.title}`,
-                }))]} />
+                options={[
+                  { value: "", label: "None" },
+                  ...(tasks ?? [])
+                    .filter((t) => t.id !== task.id)
+                    .map((t) => ({
+                      value: t.id,
+                      label: `${project?.key && t.seq != null ? `${project.key}-${t.seq} ` : ""}${t.title}`,
+                    })),
+                ]}
+              />
             </Field>
             <Field label="Due date">
-              <input type="date" defaultValue={task.due_date ?? ""} disabled={ro} className={ctl}
-                onChange={(e) => patch({ due_date: e.target.value || null })} />
+              <input
+                type="date"
+                defaultValue={task.due_date ?? ""}
+                disabled={ro}
+                className={ctl}
+                onChange={(e) => patch({ due_date: e.target.value || null })}
+              />
             </Field>
             <Field label="Labels">
-              <input value={labels} disabled={ro} placeholder="comma, separated" className={ctl}
+              <input
+                value={labels}
+                disabled={ro}
+                placeholder="comma, separated"
+                className={ctl}
                 onChange={(e) => setLabels(e.target.value)}
-                onBlur={() => patch({ labels: labels.split(",").map((l) => l.trim()).filter(Boolean) })} />
+                onBlur={() =>
+                  patch({
+                    labels: labels
+                      .split(",")
+                      .map((l) => l.trim())
+                      .filter(Boolean),
+                  })
+                }
+              />
             </Field>
           </div>
 
           <div className="space-y-1 px-1 text-xs text-slate-400">
             <div className="flex items-center gap-1">
-              <CalendarDays className="h-3 w-3" /> Created {new Date(task.created_at).toLocaleDateString()}
+              <CalendarDays className="h-3 w-3" /> Created{" "}
+              {new Date(task.created_at).toLocaleDateString()}
             </div>
             <div>Updated {new Date(task.updated_at).toLocaleString()}</div>
           </div>
@@ -399,7 +535,10 @@ export function IssueView({
       </div>
 
       {preview && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-8" onClick={() => setPreview(null)}>
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-8"
+          onClick={() => setPreview(null)}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="attachment" className="max-h-full max-w-full rounded-lg" />
         </div>

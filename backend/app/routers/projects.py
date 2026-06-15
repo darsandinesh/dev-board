@@ -6,12 +6,12 @@ GET /projects check objects derived from the body/listing rather than a path
 param, so they call authz inline instead of using the require() dependency.
 """
 
+import re
 import uuid
+from collections import Counter
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from collections import Counter
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,8 +33,6 @@ from app.schemas.project import (
     ProjectUpdate,
 )
 
-import re
-
 router = APIRouter()
 
 Db = Annotated[AsyncSession, Depends(get_db)]
@@ -55,7 +53,9 @@ async def create_project(body: ProjectCreate, user: DBUser, db: Db):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Forbidden")
 
     project = Project(
-        org_id=body.org_id, name=body.name, description=body.description,
+        org_id=body.org_id,
+        name=body.name,
+        description=body.description,
         key=project_key(body.name),
     )
     db.add(project)
@@ -91,7 +91,9 @@ async def list_projects(current: AuthUser, user: DBUser, db: Db):
                     OrgMember.user_id == user.id, OrgMember.role == OrgRole.admin
                 )
             )
-        ).scalars().all()
+        )
+        .scalars()
+        .all()
     )
     rows = await db.execute(
         select(Project, ProjectMember.role)
@@ -151,8 +153,7 @@ async def list_project_members(project_id: uuid.UUID, user: DBUser, db: Db):
         .where(ProjectMember.project_id == project_id)
     )
     return [
-        MemberOut(user_id=r.user_id, username=r.username, role=r.role.value)
-        for r in rows.all()
+        MemberOut(user_id=r.user_id, username=r.username, role=r.role.value) for r in rows.all()
     ]
 
 
@@ -209,9 +210,7 @@ async def update_project_member_role(
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require("owner", "project", "project_id"))],
 )
-async def remove_project_member(
-    project_id: uuid.UUID, user_id: uuid.UUID, user: DBUser, db: Db
-):
+async def remove_project_member(project_id: uuid.UUID, user_id: uuid.UUID, user: DBUser, db: Db):
     member = await db.get(ProjectMember, (project_id, user_id))
     if member is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Member not found")
@@ -234,41 +233,43 @@ async def project_report(project_id: uuid.UUID, user: DBUser, db: Db):
         (await db.execute(select(Task).where(Task.project_id == project_id))).scalars().all()
     )
     # username map for assignee workload
-    names = {
-        u.id: u.username
-        for u in (await db.execute(select(User))).scalars().all()
-    }
+    names = {u.id: u.username for u in (await db.execute(select(User))).scalars().all()}
 
     by_status = Counter(t.status.value for t in tasks)
     by_type = Counter(t.type.value for t in tasks)
     by_priority = Counter(t.priority.value for t in tasks)
     by_assignee = Counter(
-        names.get(t.assignee_id, "Unassigned") if t.assignee_id else "Unassigned"
-        for t in tasks
+        names.get(t.assignee_id, "Unassigned") if t.assignee_id else "Unassigned" for t in tasks
     )
     points_total = sum(t.story_points or 0 for t in tasks)
     points_done = sum(t.story_points or 0 for t in tasks if t.status == TaskStatus.done)
 
     sprints = (
-        await db.execute(
-            select(Sprint).where(
-                Sprint.project_id == project_id, Sprint.state == SprintState.active
+        (
+            await db.execute(
+                select(Sprint).where(
+                    Sprint.project_id == project_id, Sprint.state == SprintState.active
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     active_sprints = []
     for s in sprints:
         s_tasks = [t for t in tasks if t.sprint_id == s.id]
-        active_sprints.append({
-            "id": str(s.id),
-            "name": s.name,
-            "total": len(s_tasks),
-            "done": sum(1 for t in s_tasks if t.status == TaskStatus.done),
-            "points": sum(t.story_points or 0 for t in s_tasks),
-            "points_done": sum(
-                t.story_points or 0 for t in s_tasks if t.status == TaskStatus.done
-            ),
-        })
+        active_sprints.append(
+            {
+                "id": str(s.id),
+                "name": s.name,
+                "total": len(s_tasks),
+                "done": sum(1 for t in s_tasks if t.status == TaskStatus.done),
+                "points": sum(t.story_points or 0 for t in s_tasks),
+                "points_done": sum(
+                    t.story_points or 0 for t in s_tasks if t.status == TaskStatus.done
+                ),
+            }
+        )
 
     return {
         "total": len(tasks),

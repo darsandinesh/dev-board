@@ -20,9 +20,7 @@ class Project(Base):
     __tablename__ = "projects"
 
     id: Mapped[uuid.UUID] = pk()  # OpenFGA `project:<id>`
-    org_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("orgs.id", ondelete="CASCADE"), index=True
-    )
+    org_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("orgs.id", ondelete="CASCADE"), index=True)
     name: Mapped[str]
     description: Mapped[str | None]
     # Short issue-key prefix, e.g. "WEB" -> issues display as WEB-1, WEB-2…

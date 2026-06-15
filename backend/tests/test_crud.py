@@ -23,7 +23,7 @@ async def test_org_create_and_members(client, seed):
 
 
 async def test_org_creates_default_project(client, seed):
-    org = await seed.org(admin="alice")
+    await seed.org(admin="alice")
     projects = (await client.get("/projects", headers=bearer("alice"))).json()
     assert any(p["name"] == "General" and p["my_role"] == "owner" for p in projects)
 
@@ -67,16 +67,18 @@ async def test_task_crud_cycle(client, seed):
     org = await seed.org(admin="alice")
     proj = await seed.project(org, owner="alice")
     # create
-    created = await client.post("/tasks", headers=bearer("alice"),
-                                json={"project_id": proj, "title": "Ship it"})
+    created = await client.post(
+        "/tasks", headers=bearer("alice"), json={"project_id": proj, "title": "Ship it"}
+    )
     assert created.status_code == 201
     tid = created.json()["id"]
     # read (list)
     lst = await client.get(f"/tasks?project_id={proj}", headers=bearer("alice"))
     assert any(t["id"] == tid for t in lst.json())
     # update
-    upd = await client.patch(f"/tasks/{tid}", headers=bearer("alice"),
-                             json={"status": "done", "position": 2})
+    upd = await client.patch(
+        f"/tasks/{tid}", headers=bearer("alice"), json={"status": "done", "position": 2}
+    )
     assert upd.status_code == 200 and upd.json()["status"] == "done"
     # delete
     assert (await client.delete(f"/tasks/{tid}", headers=bearer("alice"))).status_code == 204

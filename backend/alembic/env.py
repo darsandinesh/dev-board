@@ -17,8 +17,8 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Pull the DB URL from app settings (reads .env) rather than alembic.ini.
-from app.core.config import settings  # noqa: E402
 import app.models  # noqa: E402,F401  — import all models so metadata is populated
+from app.core.config import settings  # noqa: E402
 from app.db.base import Base  # noqa: E402
 
 config.set_main_option("sqlalchemy.url", settings.database_url)

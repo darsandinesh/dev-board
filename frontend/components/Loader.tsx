@@ -19,11 +19,7 @@ export function Loader({ size = 32 }: { size?: number }) {
       aria-label="Loading"
     >
       {BARS.map((b, i) => (
-        <span
-          key={i}
-          className={`kanban-bar ${b.color}`}
-          style={{ animationDelay: b.delay }}
-        />
+        <span key={i} className={`kanban-bar ${b.color}`} style={{ animationDelay: b.delay }} />
       ))}
     </div>
   );

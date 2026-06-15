@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Search, UserPlus } from "lucide-react";
+import { Search, UserPlus } from "lucide-react";
 import { useState } from "react";
 
 import { Avatar } from "@/components/Avatar";

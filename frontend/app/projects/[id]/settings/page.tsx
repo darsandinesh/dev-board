@@ -10,6 +10,9 @@ import { AddMemberSearch } from "@/components/AddMemberSearch";
 import { ErrorState } from "@/components/ErrorState";
 import { LoaderScreen } from "@/components/Loader";
 import { MemberTable } from "@/components/MemberTable";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input, Label, Textarea } from "@/components/ui/Input";
 import {
   useAddProjectMember,
   usePermissions,
@@ -67,7 +70,7 @@ export default function ProjectSettingsPage() {
       </div>
 
       {/* Project details */}
-      <section className="rounded-2xl border bg-white p-6 shadow-sm">
+      <Card>
         <h2 className="flex items-center gap-2 font-semibold text-slate-900">
           <SlidersHorizontal className="h-5 w-5 text-indigo-600" /> Project
           {project?.key && (
@@ -78,30 +81,15 @@ export default function ProjectSettingsPage() {
         </h2>
         <div className="mt-4 space-y-3">
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">
-              Name
-            </label>
-            <input
-              value={name}
-              disabled={!isOwner}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-500 disabled:bg-slate-50"
-            />
+            <Label>Name</Label>
+            <Input value={name} disabled={!isOwner} onChange={(e) => setName(e.target.value)} />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">
-              Description
-            </label>
-            <textarea
-              value={description}
-              disabled={!isOwner}
-              rows={3}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-500 disabled:bg-slate-50"
-            />
+            <Label>Description</Label>
+            <Textarea value={description} disabled={!isOwner} rows={3} onChange={(e) => setDescription(e.target.value)} />
           </div>
           {isOwner && (
-            <button
+            <Button
               disabled={!dirty || updateProject.isPending}
               onClick={() =>
                 updateProject.mutate(
@@ -109,10 +97,9 @@ export default function ProjectSettingsPage() {
                   { onSuccess: () => toast.success("Project updated") },
                 )
               }
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
             >
               Save changes
-            </button>
+            </Button>
           )}
           {!isOwner && (
             <p className="text-xs text-slate-400">
@@ -120,10 +107,10 @@ export default function ProjectSettingsPage() {
             </p>
           )}
         </div>
-      </section>
+      </Card>
 
       {/* Members */}
-      <section className="rounded-2xl border bg-white p-6 shadow-sm">
+      <Card>
         <h2 className="flex items-center gap-2 font-semibold text-slate-900">
           <Users className="h-5 w-5 text-indigo-600" /> Members
         </h2>
@@ -154,7 +141,7 @@ export default function ProjectSettingsPage() {
         <div className="mt-5">
           <MemberTable projectId={id} canManage={isOwner} />
         </div>
-      </section>
+      </Card>
     </div>
   );
 }

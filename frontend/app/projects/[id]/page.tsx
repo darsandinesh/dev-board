@@ -10,6 +10,9 @@ import { Board } from "@/components/Board";
 import { CreateIssueModal } from "@/components/CreateIssueModal";
 import { Reports } from "@/components/Reports";
 import { Select } from "@/components/Select";
+import { Button, buttonClass } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Tabs } from "@/components/ui/Tabs";
 import { ErrorState } from "@/components/ErrorState";
 import { LoaderScreen } from "@/components/Loader";
 import { Protected } from "@/components/Protected";
@@ -88,18 +91,12 @@ export default function ProjectBoardPage() {
               </span>
             )}
             <Protected allowed={perms?.can_edit}>
-              <button
-                onClick={() => setShowCreate(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-indigo-700"
-              >
+              <Button size="sm" onClick={() => setShowCreate(true)}>
                 <Plus className="h-4 w-4" /> Create
-              </button>
+              </Button>
             </Protected>
             <Protected allowed={perms?.is_owner}>
-              <Link
-                href={`/projects/${id}/settings`}
-                className="inline-flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-sm text-slate-600 transition hover:bg-slate-50"
-              >
+              <Link href={`/projects/${id}/settings`} className={buttonClass({ variant: "secondary", size: "sm" })}>
                 <Settings className="h-4 w-4" /> Settings
               </Link>
             </Protected>
@@ -108,21 +105,15 @@ export default function ProjectBoardPage() {
       </div>
 
       {/* View tabs */}
-      <div className="flex gap-1 border-b">
-        {(["board", "backlog", "reports"] as const).map((v) => (
-          <button
-            key={v}
-            onClick={() => setView(v)}
-            className={`-mb-px border-b-2 px-3 py-1.5 text-sm font-medium capitalize transition ${
-              view === v
-                ? "border-indigo-600 text-indigo-700"
-                : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            {v}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        value={view}
+        onChange={(v) => setView(v as typeof view)}
+        tabs={[
+          { value: "board", label: "Board" },
+          { value: "backlog", label: "Backlog" },
+          { value: "reports", label: "Reports" },
+        ]}
+      />
 
       {view === "backlog" && <Backlog projectId={id} canEdit={!!perms?.can_edit} />}
 
@@ -133,12 +124,12 @@ export default function ProjectBoardPage() {
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
+          <Search className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search issues…"
-            className="rounded-lg border bg-white py-1.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-500"
+            className="w-auto py-1.5 pl-9"
           />
         </div>
         <Select value={typeF} onChange={setTypeF}

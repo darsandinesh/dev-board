@@ -9,6 +9,7 @@ import { AttachmentItem } from "@/components/AttachmentItem";
 import { Avatar } from "@/components/Avatar";
 import { LoaderScreen } from "@/components/Loader";
 import { Select } from "@/components/Select";
+import { Tabs } from "@/components/ui/Tabs";
 import { LINK_LABELS, PRIORITIES, STATUSES, TYPES, TYPE_META } from "@/components/issueMeta";
 import {
   useActivity,
@@ -249,16 +250,15 @@ export function IssueView({
 
           {/* Activity */}
           <div>
-            <div className="mb-3 flex items-center gap-1 border-b">
-              {(["comments", "history"] as const).map((t) => (
-                <button key={t} onClick={() => setTab(t)}
-                  className={`-mb-px border-b-2 px-3 py-1.5 text-sm font-medium capitalize ${
-                    tab === t ? "border-indigo-600 text-indigo-700" : "border-transparent text-slate-500 hover:text-slate-800"
-                  }`}>
-                  {t}
-                </button>
-              ))}
-            </div>
+            <Tabs
+              className="mb-3"
+              value={tab}
+              onChange={(v) => setTab(v as typeof tab)}
+              tabs={[
+                { value: "comments", label: "Comments" },
+                { value: "history", label: "History" },
+              ]}
+            />
 
             {tab === "comments" ? (
               <>

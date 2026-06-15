@@ -7,6 +7,9 @@ import { toast } from "sonner";
 
 import { ErrorState } from "@/components/ErrorState";
 import { LoaderScreen } from "@/components/Loader";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input, Label } from "@/components/ui/Input";
 import {
   useCreateOrg,
   useMe,
@@ -49,7 +52,7 @@ export default function TenantsPage() {
       </div>
 
       {/* Create tenant */}
-      <section className="rounded-2xl border bg-white p-6 shadow-sm">
+      <Card>
         <h2 className="mb-4 flex items-center gap-2 font-semibold text-slate-900">
           <Plus className="h-5 w-5 text-indigo-600" /> New tenant
         </h2>
@@ -72,21 +75,12 @@ export default function TenantsPage() {
           }}
         >
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">
-              Tenant name
-            </label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Acme Corp"
-              className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-            />
+            <Label>Tenant name</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Acme Corp" />
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">
-              Initial tenant-admin (optional — defaults to you)
-            </label>
+            <Label>Initial tenant-admin (optional — defaults to you)</Label>
             {admin ? (
               <div className="flex items-center justify-between rounded-lg border bg-slate-50 px-3 py-2 text-sm">
                 <span className="font-medium text-slate-700">
@@ -103,11 +97,10 @@ export default function TenantsPage() {
               </div>
             ) : (
               <>
-                <input
+                <Input
                   value={adminQuery}
                   onChange={(e) => setAdminQuery(e.target.value)}
                   placeholder="Search a user to make tenant-admin…"
-                  className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                 />
                 {adminQuery && candidates && candidates.length > 0 && (
                   <ul className="mt-1 max-h-40 divide-y overflow-auto rounded-lg border bg-white">
@@ -129,17 +122,14 @@ export default function TenantsPage() {
             )}
           </div>
 
-          <button
-            disabled={createOrg.isPending || !name.trim()}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
-          >
+          <Button disabled={createOrg.isPending || !name.trim()}>
             <Building2 className="h-4 w-4" /> Create tenant
-          </button>
+          </Button>
         </form>
-      </section>
+      </Card>
 
       {/* All tenants */}
-      <section className="rounded-2xl border bg-white p-6 shadow-sm">
+      <Card>
         <h2 className="flex items-center gap-2 font-semibold text-slate-900">
           <Building2 className="h-5 w-5 text-indigo-600" /> All tenants
           <span className="ml-1 rounded-full bg-slate-100 px-2 text-xs text-slate-500">
@@ -163,7 +153,7 @@ export default function TenantsPage() {
         ) : (
           <p className="mt-3 text-sm text-slate-500">No tenants yet.</p>
         )}
-      </section>
+      </Card>
     </div>
   );
 }

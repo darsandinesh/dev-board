@@ -4,9 +4,12 @@ import { ChevronRight, Play, Plus, Square, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { toast } from "sonner";
+
 import { TYPE_META } from "@/components/issueMeta";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
 import {
   useCreateSprint,
@@ -15,6 +18,7 @@ import {
   useSprints,
   useTasks,
   useUpdateSprint,
+  type Sprint,
   type Task,
 } from "@/lib/api";
 
@@ -51,6 +55,7 @@ export function Backlog({ projectId, canEdit }: { projectId: string; canEdit: bo
   const updateSprint = useUpdateSprint(projectId);
   const deleteSprint = useDeleteSprint(projectId);
   const [name, setName] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<Sprint | null>(null);
 
   const inSprint = (sid: string) => (tasks ?? []).filter((t) => t.sprint_id === sid);
   const backlog = (tasks ?? []).filter((t) => !t.sprint_id);
@@ -111,7 +116,7 @@ export function Backlog({ projectId, canEdit }: { projectId: string; canEdit: bo
                     </button>
                   )}
                   <button
-                    onClick={() => deleteSprint.mutate(s.id)}
+                    onClick={() => setPendingDelete(s)}
                     title="Delete sprint"
                     className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
                   >
@@ -146,6 +151,28 @@ export function Backlog({ projectId, canEdit }: { projectId: string; canEdit: bo
           <div className="px-4 py-3 text-sm text-slate-400">Backlog is empty.</div>
         )}
       </section>
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title="Delete sprint?"
+          message={
+            <>
+              <span className="font-medium text-slate-700">{pendingDelete.name}</span> will be
+              deleted. Its issues stay in the project and move back to the backlog.
+            </>
+          }
+          pending={deleteSprint.isPending}
+          onCancel={() => setPendingDelete(null)}
+          onConfirm={() =>
+            deleteSprint.mutate(pendingDelete.id, {
+              onSuccess: () => {
+                toast.success("Sprint deleted");
+                setPendingDelete(null);
+              },
+            })
+          }
+        />
+      )}
     </div>
   );
 }

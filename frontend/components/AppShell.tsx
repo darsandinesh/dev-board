@@ -1,18 +1,32 @@
 "use client";
 
-import { SquareKanban } from "lucide-react";
+import { Search, SquareKanban } from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { Avatar } from "./Avatar";
+import { Breadcrumbs } from "./Breadcrumbs";
+import { CommandPalette } from "./CommandPalette";
 import { DemoCredentials } from "./DemoCredentials";
 import { Loader } from "./Loader";
 import { NotificationBell } from "./NotificationBell";
-import { ProjectSwitcher } from "./ProjectSwitcher";
 import { Sidebar } from "./Sidebar";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // Global ⌘K / Ctrl+K to open the command palette.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   if (status === "loading") {
     return (
@@ -52,8 +66,16 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-white px-6">
-          <ProjectSwitcher />
+          <Breadcrumbs />
           <div className="flex flex-1 items-center justify-end gap-3">
+            <button
+              onClick={() => setPaletteOpen(true)}
+              className="flex items-center gap-2 rounded-lg border bg-slate-50 px-3 py-1.5 text-sm text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            >
+              <Search className="h-4 w-4" />
+              <span className="hidden sm:inline">Search…</span>
+              <kbd className="hidden rounded border bg-white px-1.5 text-[10px] sm:inline">⌘K</kbd>
+            </button>
             <NotificationBell />
             <Avatar name={name} size={28} />
             <span className="text-sm font-medium text-slate-700">{name}</span>
@@ -63,6 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="animate-fade-in mx-auto max-w-6xl">{children}</div>
         </main>
       </div>
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   );
 }

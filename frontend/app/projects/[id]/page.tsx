@@ -13,8 +13,8 @@ import { Select } from "@/components/Select";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Tabs } from "@/components/ui/Tabs";
+import { BoardSkeleton } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ErrorState";
-import { LoaderScreen } from "@/components/Loader";
 import { Protected } from "@/components/Protected";
 import {
   usePermissions,
@@ -179,7 +179,7 @@ export default function ProjectBoardPage() {
           </div>
 
           {isLoading ? (
-            <LoaderScreen message="Loading tasks" />
+            <BoardSkeleton />
           ) : (
             <Board
               tasks={filtered}
@@ -187,6 +187,7 @@ export default function ProjectBoardPage() {
               onMove={move}
               assignees={assignees}
               projectKey={project?.key}
+              projectId={id}
             />
           )}
         </>

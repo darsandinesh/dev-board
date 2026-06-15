@@ -194,6 +194,7 @@ export function useProject(id: string) {
   return useQuery({
     queryKey: ["project", id],
     queryFn: () => authedFetch<Project>(`/projects/${id}`),
+    enabled: !!id,
   });
 }
 
@@ -216,6 +217,7 @@ export function useTasks(projectId: string) {
   return useQuery({
     queryKey: ["tasks", projectId],
     queryFn: () => authedFetch<Task[]>(`/tasks?project_id=${projectId}`),
+    enabled: !!projectId,
   });
 }
 
